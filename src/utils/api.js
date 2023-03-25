@@ -3,6 +3,7 @@ import { getCookie } from './cookieConfig';
 
 const baseUrl = 'https://api.m2academy.in';
 
+// ------------- Creating axios instance --------------
 const apiClient = axios.create({
   baseURL: baseUrl,
   headers: {
@@ -13,8 +14,15 @@ const apiClient = axios.create({
   timeout: 30000,
 });
 
+// ---------- setting up axios auth header -------------------
 export function setAuthHeader(token) {
   apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
+
+// ---------------- APIs Calls --------------------
+
+export const getBoards = () => {
+  return apiClient.get('/boards');
+};
 
 export default apiClient;
