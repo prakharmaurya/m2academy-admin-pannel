@@ -1,46 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { createNewBoard, deleteBoard, getBoards } from '../utils/api';
-import { BsTrash } from 'react-icons/bs';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineClose } from 'react-icons/md';
-import { useNavigate } from 'react-router-dom';
+import { BsTrash } from 'react-icons/bs';
+import {
+  createClassByBoard,
+  deleteClass,
+  getClassessByBoard,
+} from '../../utils/api';
 
-const Home = () => {
+const Board = () => {
+  const params = useParams();
   const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [boards, setBoards] = useState([]);
-  const [board, setBoard] = useState('');
+  const [classess, setClassess] = useState([]);
+  const [inClass, setClass] = useState('');
   const [error, setError] = useState('');
 
-  const createBoard = async (event) => {
+  const createClass = async (event) => {
     event.preventDefault();
+    const data = {
+      name: inClass,
+      board_id: params.id * 1,
+    };
     try {
-      const res = await createNewBoard({ name: board });
+      const res = await createClassByBoard(data);
       console.log(res);
-      setIsOpen(false);
-      fetchBoards();
-    } catch (err) {
-      console.log(err);
-      setIsOpen(false);
-    }
-    console.log('board created');
-  };
-
-  const delBoard = async (id) => {
-    try {
-      await deleteBoard(id);
-      fetchBoards();
+      fetchClassess();
     } catch (err) {
       console.log(err);
     }
   };
 
-  const fetchBoards = async () => {
+  const delClass = async (id) => {
     try {
-      setError('');
-      const res = await getBoards();
-      console.log(res);
-      setBoards(res.data);
+      await deleteClass(id);
+      fetchClassess();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const fetchClassess = async () => {
+    try {
+      const res = await getClassessByBoard(params.id);
+      console.log(res.data);
+      setClassess(res.data.classes);
     } catch (err) {
       console.log(err);
       if (err.response) {
@@ -52,19 +57,19 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchBoards();
-  }, []);
+    fetchClassess();
+  }, [params.id]);
 
   return (
     <div>
       <div className="max-w-7xl container mx-auto px-4 py-5">
         <div className="flex justify-between items-center mb-5">
-          <h3 className="text-2xl font-semibold">Boards</h3>
+          <h3 className="text-2xl font-semibold">Classess</h3>
           <button
             className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
             onClick={() => setIsOpen(true)}
           >
-            Create Board
+            Create Class
           </button>
         </div>
         {/* ------- Error ---------- */}
@@ -76,27 +81,27 @@ const Home = () => {
                 className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
                 onClick={() => setIsOpen(true)}
               >
-                Create Board
+                Create Class
               </button>
             </div>
           </div>
         )}
-        {/* ------- All Board list ------------ */}
-        {boards.length > 0 && (
+        {/* ------- All Classess list ------------ */}
+        {classess.length > 0 && (
           <div className="py-2 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5">
-            {boards.map((board) => {
+            {classess.map((cls) => {
               return (
                 <div
-                  key={board.id}
+                  key={cls.id}
                   className="bg-blue-50 px-3 py-5 rounded-md border border-blue-300"
                 >
                   <div className="flex justify-between items-center">
-                    <h4 className="uppercase text-xl font-semibold">
-                      {board.name}
+                    <h4 className="capitalize text-xl font-semibold">
+                      {cls.name}
                     </h4>
                     <button
                       className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delBoard(board.id)}
+                      onClick={() => delClass(cls.id)}
                     >
                       <BsTrash size={20} />
                     </button>
@@ -104,9 +109,9 @@ const Home = () => {
                   <div className="my-2 border-b border-b-gray-600/50 opacity-30"></div>
                   <button
                     className="mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black"
-                    onClick={() => navigate(`/${board.id}`)}
+                    onClick={() => navigate(`${cls.id}`)}
                   >
-                    Classess
+                    Subjects
                   </button>
                 </div>
               );
@@ -114,7 +119,7 @@ const Home = () => {
           </div>
         )}
 
-        {/* ------------ Create Board Pop up ------------------ */}
+        {/* ------------ Create New Class Pop up ------------------ */}
         {isOpen && (
           <div
             className={`${
@@ -133,20 +138,20 @@ const Home = () => {
               <div className=" flex justify-center">
                 <div className="px-3 py-8 w-full">
                   <p className="text-center text-xl text-blue-500 font-semibold">
-                    Create Board
+                    Create Class
                   </p>
                   <form
-                    onSubmit={createBoard}
+                    onSubmit={createClass}
                     className="py-10 flex flex-col gap-5"
                   >
                     <div className="flex flex-col gap-1">
-                      <label className="text-sm">Board Name</label>
+                      <label className="text-sm">Class Name</label>
                       <input
                         required
                         type="text"
-                        placeholder="Enter Your Board Name"
+                        placeholder="Enter Your Class Name"
                         className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setBoard(e.target.value)}
+                        onChange={(e) => setClass(e.target.value)}
                       />
                     </div>
                     <div className="flex justify-center">
@@ -154,7 +159,7 @@ const Home = () => {
                         type="submit"
                         className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
                       >
-                        Create
+                        Create Class
                       </button>
                     </div>
                   </form>
@@ -168,4 +173,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Board;
