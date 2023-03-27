@@ -14,20 +14,18 @@ const LoginForm = () => {
     try {
       const res = await apiClient.post('/teachers/login', { email, password });
       const token = res.data.token;
+
       setAuthHeader(token);
       setCookie('token', token);
       navigate('/');
     } catch (err) {
       if (err.response) {
-        if (
-          err.response.data.message ===
-          'crypto/bcrypt: hashedPassword is not the hash of the given password'
-        ) {
-          alert('posssword is incorrect');
+        if (err.response.data.message) {
+          alert(err.response.data.message);
         }
-        if (err.response.data.message === 'sql: no rows in result set') {
-          alert('user not found');
-        }
+        // if (err.response.data.message === 'sql: no rows in result set') {
+        //   alert('user not found');
+        // }
       }
       console.log(err);
     }
