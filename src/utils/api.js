@@ -55,4 +55,30 @@ export const deleteClass = (id) => {
   return apiClient.delete(`/classes/${id}`);
 };
 
+// -------------- Subjects ----------------------
+
+export const getSubjectsByClass = (id) => {
+  return apiClient.get(`/subjects?class_id=${id}`);
+};
+
+export const createSubjectByClass = (payload) => {
+  return apiClient.post('/subjects', payload);
+};
+export const deleteSubject = (id) => {
+  return apiClient.delete(`/subjects/${id}`);
+};
+
+// -------------- Chapters ----------------------
+
+export const getChaptersBySubject = (id) => {
+  return apiClient.get(`/chapters?subject_id=${id}`);
+};
+
+export const createChapterBySubject = (payload) => {
+  return apiClient.post('/chapters', payload);
+};
+export const deleteChapter = (id) => {
+  return apiClient.delete(`/chapters/${id}`);
+};
+
 export default apiClient;

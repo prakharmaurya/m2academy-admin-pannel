@@ -6,6 +6,8 @@ import Login from './pages/auth/Login';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Board from './pages/[board]';
+import Classes from './pages/[board]/[classes]';
+import Chapters from './pages/[board]/[classes]/[chapters]';
 function App() {
   return (
     <>
@@ -15,6 +17,11 @@ function App() {
         <Route path="/auth/forgot_password" element={<ForgotPassword />} />
         <Route path="/" element={<Protected Component={Home} />} />
         <Route path="/:id" element={<Protected Component={Board} />} />
+        <Route path="/:id/:id" element={<Protected Component={Classes} />} />
+        <Route
+          path="/:id/:id/:id"
+          element={<Protected Component={Chapters} />}
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
