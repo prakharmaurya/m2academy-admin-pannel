@@ -54,6 +54,7 @@ export const createClassByBoard = (payload) => {
 export const deleteClass = (id) => {
   return apiClient.delete(`/classes/${id}`);
 };
+
 // -------------- Subjects ----------------------
 
 export const getSubjectsByClass = (id) => {
@@ -65,6 +66,19 @@ export const createSubjectByClass = (payload) => {
 };
 export const deleteSubject = (id) => {
   return apiClient.delete(`/subjects/${id}`);
+};
+
+// -------------- Chapters ----------------------
+
+export const getChaptersBySubject = (id) => {
+  return apiClient.get(`/chapters?subject_id=${id}`);
+};
+
+export const createChapterBySubject = (payload) => {
+  return apiClient.post('/chapters', payload);
+};
+export const deleteChapter = (id) => {
+  return apiClient.delete(`/chapters/${id}`);
 };
 
 export default apiClient;
