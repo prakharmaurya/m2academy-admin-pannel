@@ -25,11 +25,16 @@ const Classes = () => {
       class_id: params.id * 1,
     };
     try {
-      const res = await createSubjectByClass(data);
-      console.log(res);
+      await createSubjectByClass(data);
       fetchAllSubjects();
+      setIsOpen(false);
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -39,6 +44,11 @@ const Classes = () => {
       fetchAllSubjects();
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -46,13 +56,16 @@ const Classes = () => {
     try {
       const id = params.id * 1;
       const res = await getSubjectsByClass(id);
-      console.log(res);
+      // console.log(res);
       setAllSubjects(res.data.subjects);
     } catch (err) {
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+        }
+        if (err.response.data.message === 'subjects not found') {
+          setAllSubjects([]);
         }
       }
     }
@@ -75,7 +88,7 @@ const Classes = () => {
           </button>
         </div>
         {/* ------- Error ---------- */}
-        {error.length > 0 && (
+        {error.length > 0 && !allSubjects.length > 0 && (
           <div className="h-96 flex justify-center items-center">
             <div>
               <p className="mb-5 capitalize text-xl font-semibold">{error}</p>
@@ -83,7 +96,7 @@ const Classes = () => {
                 className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
                 onClick={() => setIsOpen(true)}
               >
-                Create Class
+                Create Subject
               </button>
             </div>
           </div>
@@ -140,7 +153,7 @@ const Classes = () => {
               <div className=" flex justify-center">
                 <div className="px-3 py-8 w-full">
                   <p className="text-center text-xl text-blue-500 font-semibold">
-                    Create Class
+                    Create Subject
                   </p>
                   <form
                     onSubmit={createSubject}
