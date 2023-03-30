@@ -27,9 +27,6 @@ const LoginForm = () => {
         if (err.response.data.message) {
           alert(err.response.data.message);
         }
-        // if (err.response.data.message === 'sql: no rows in result set') {
-        //   alert('user not found');
-        // }
       }
       console.log(err);
     }
