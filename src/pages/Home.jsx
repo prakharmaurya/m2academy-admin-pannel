@@ -16,22 +16,32 @@ const Home = () => {
     event.preventDefault();
     try {
       const res = await createNewBoard({ name: board });
-      console.log(res);
+      // console.log(res);
       setIsOpen(false);
       fetchBoards();
     } catch (err) {
       console.log(err);
       setIsOpen(false);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
-    console.log('board created');
   };
 
   const delBoard = async (id) => {
     try {
       await deleteBoard(id);
       fetchBoards();
+      alert('Board deleted successfully');
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -39,13 +49,16 @@ const Home = () => {
     try {
       setError('');
       const res = await getBoards();
-      console.log(res);
+      // console.log(res);
       setBoards(res.data);
     } catch (err) {
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+        }
+        if (err.response.data.message === 'no boards found') {
+          setBoards([]);
         }
       }
     }
@@ -68,7 +81,7 @@ const Home = () => {
           </button>
         </div>
         {/* ------- Error ---------- */}
-        {error.length > 0 && (
+        {error.length > 0 && !boards.length > 0 && (
           <div className="h-96 flex justify-center items-center">
             <div>
               <p className="mb-5 capitalize text-xl font-semibold">{error}</p>
