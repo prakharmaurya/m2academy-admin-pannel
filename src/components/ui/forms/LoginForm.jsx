@@ -1,7 +1,10 @@
 import React from 'react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient, { setAuthHeader } from '../../../utils/api';
+import apiClient, {
+  setAuthHeader,
+  setFormDataAuthHeader,
+} from '../../../utils/api';
 import { setCookie } from '../../../utils/cookieConfig';
 
 const LoginForm = () => {
@@ -16,6 +19,7 @@ const LoginForm = () => {
       const token = res.data.token;
 
       setAuthHeader(token);
+      setFormDataAuthHeader(token);
       setCookie('token', token);
       navigate('/');
     } catch (err) {
@@ -23,9 +27,6 @@ const LoginForm = () => {
         if (err.response.data.message) {
           alert(err.response.data.message);
         }
-        // if (err.response.data.message === 'sql: no rows in result set') {
-        //   alert('user not found');
-        // }
       }
       console.log(err);
     }

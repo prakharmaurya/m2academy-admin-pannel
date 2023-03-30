@@ -24,10 +24,16 @@ const Chapters = () => {
         name: inChapter,
         subject_id: params.id * 1,
       };
-      const res = await createChapterBySubject(data);
+      await createChapterBySubject(data);
       fetchChapters();
+      setIsOpen(false);
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -35,13 +41,16 @@ const Chapters = () => {
     try {
       const id = params.id * 1;
       const res = await getChaptersBySubject(id);
-      console.log(res.data);
+      // console.log(res.data);
       setChapters(res.data.chapters);
     } catch (err) {
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+        }
+        if (err.response.data.message === 'chapters not found') {
+          setChapters([]);
         }
       }
     }
@@ -53,6 +62,11 @@ const Chapters = () => {
       fetchChapters();
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -73,7 +87,7 @@ const Chapters = () => {
           </button>
         </div>
         {/* ------- Error ---------- */}
-        {error.length > 0 && (
+        {error.length > 0 && !chapters.length > 0 && (
           <div className="h-96 flex justify-center items-center">
             <div>
               <p className="mb-5 capitalize text-xl font-semibold">{error}</p>

@@ -26,7 +26,28 @@ export function setAuthHeader(token) {
     timeout: 30000,
   });
 }
+// ---------------- Form Data axios configurations -----------
+let formDataApiClient = axios.create({
+  baseURL: baseUrl,
+  headers: {
+    'Content-Type': 'multipart/form-data',
+    Authorization: `Bearer ${getCookie('token')}`,
+    cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+  },
+  timeout: 30000,
+});
 
+export function setFormDataAuthHeader(token) {
+  formDataApiClient = axios.create({
+    baseURL: baseUrl,
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      Authorization: `Bearer ${token}`,
+      cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+    },
+    timeout: 30000,
+  });
+}
 // ---------------- APIs Calls --------------------
 
 // -------------- Board ----------------------
@@ -79,6 +100,19 @@ export const createChapterBySubject = (payload) => {
 };
 export const deleteChapter = (id) => {
   return apiClient.delete(`/chapters/${id}`);
+};
+
+// -------------- Contents ----------------------
+
+export const getContentByChapter = (id) => {
+  return apiClient.get(`/contents?chapter_id=${id}`);
+};
+
+export const uploadContentByChapter = (payload) => {
+  return formDataApiClient.post('/contents', payload);
+};
+export const deleteContent = (id) => {
+  return apiClient.delete(`/contents/${id}`);
 };
 
 export default apiClient;
