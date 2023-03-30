@@ -24,11 +24,18 @@ const Board = () => {
       board_id: params.id * 1,
     };
     try {
-      const res = await createClassByBoard(data);
-      console.log(res);
+      await createClassByBoard(data);
+      // console.log(res);
       fetchClassess();
+      setIsOpen(false);
     } catch (err) {
       console.log(err);
+      setIsOpen(false);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
@@ -38,19 +45,27 @@ const Board = () => {
       fetchClassess();
     } catch (err) {
       console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
     }
   };
 
   const fetchClassess = async () => {
     try {
       const res = await getClassessByBoard(params.id);
-      console.log(res.data);
+      // console.log(res.data);
       setClassess(res.data.classes);
     } catch (err) {
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+        }
+        if (err.response.data.message === 'classes not found') {
+          setClassess([]);
         }
       }
     }
@@ -73,7 +88,7 @@ const Board = () => {
           </button>
         </div>
         {/* ------- Error ---------- */}
-        {error.length > 0 && (
+        {error.length > 0 && !classess.length > 0 && (
           <div className="h-96 flex justify-center items-center">
             <div>
               <p className="mb-5 capitalize text-xl font-semibold">{error}</p>
