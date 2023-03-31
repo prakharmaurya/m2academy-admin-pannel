@@ -2,6 +2,8 @@ import axios from 'axios';
 import { getCookie } from './cookieConfig';
 
 const baseUrl = 'https://api.m2academy.in';
+// const cid = '2786caca-8a58-4ca9-87be-c55996c4bc11';
+const cid = 'c9492d75-0bb9-47e8-b412-718189704ffa';
 
 // ------------- Creating axios instance --------------
 let apiClient = axios.create({
@@ -9,7 +11,7 @@ let apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${getCookie('token')}`,
-    cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+    cid: cid,
   },
   timeout: 30000,
 });
@@ -21,7 +23,7 @@ export function setAuthHeader(token) {
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
-      cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+      cid: cid,
     },
     timeout: 30000,
   });
@@ -32,7 +34,7 @@ let formDataApiClient = axios.create({
   headers: {
     'Content-Type': 'multipart/form-data',
     Authorization: `Bearer ${getCookie('token')}`,
-    cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+    cid: cid,
   },
   timeout: 30000,
 });
@@ -43,7 +45,7 @@ export function setFormDataAuthHeader(token) {
     headers: {
       'Content-Type': 'multipart/form-data',
       Authorization: `Bearer ${token}`,
-      cid: '2786caca-8a58-4ca9-87be-c55996c4bc11',
+      cid: cid,
     },
     timeout: 30000,
   });
