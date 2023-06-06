@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { createNewBoard, deleteBoard, getBoards } from '../utils/api';
+import {
+  createNewCategory,
+  deleteACategory,
+  getAllCategory,
+} from '../utils/api';
 import { BsTrash } from 'react-icons/bs';
 import { MdOutlineClose } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +19,8 @@ const Home = () => {
   const createBoard = async (event) => {
     event.preventDefault();
     try {
-      const res = await createNewBoard({ name: board });
+      // console.log(board);
+      const res = await createNewCategory({ name: board, tag: 'Board' });
       // console.log(res);
       setIsOpen(false);
       fetchBoards();
@@ -32,7 +37,7 @@ const Home = () => {
 
   const delBoard = async (id) => {
     try {
-      await deleteBoard(id);
+      await deleteACategory(id);
       fetchBoards();
       alert('Board deleted successfully');
     } catch (err) {
@@ -48,9 +53,16 @@ const Home = () => {
   const fetchBoards = async () => {
     try {
       setError('');
-      const res = await getBoards();
-      // console.log(res);
-      setBoards(res.data);
+      const res = await getAllCategory();
+      // console.log(res.data);
+      const b = [];
+      res.data.forEach((element) => {
+        if (element.category_id === 0 && element.tag === 'board') {
+          b.push(element);
+        }
+      });
+      // console.log(b);
+      setBoards(b);
     } catch (err) {
       console.log(err);
       if (err.response) {

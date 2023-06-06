@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  createChapterBySubject,
-  deleteChapter,
-  getChaptersBySubject,
+  createNewCategory,
+  deleteACategory,
+  getAllCategory,
 } from '../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
@@ -22,9 +22,10 @@ const Chapters = () => {
     try {
       const data = {
         name: inChapter,
-        subject_id: params.id * 1,
+        tag: 'chapter',
+        category_id: params.id * 1,
       };
-      await createChapterBySubject(data);
+      await createNewCategory(data);
       fetchChapters();
       setIsOpen(false);
     } catch (err) {
@@ -39,10 +40,18 @@ const Chapters = () => {
 
   const fetchChapters = async () => {
     try {
-      const id = params.id * 1;
-      const res = await getChaptersBySubject(id);
+      const res = await getAllCategory();
       // console.log(res.data);
-      setChapters(res.data.chapters);
+      const c = [];
+      res.data.forEach((element) => {
+        if (
+          params.id * 1 === element.category_id &&
+          element.tag === 'chapter'
+        ) {
+          c.push(element);
+        }
+      });
+      setChapters(c);
     } catch (err) {
       console.log(err);
       if (err.response) {
@@ -58,7 +67,7 @@ const Chapters = () => {
 
   const delChapter = async (id) => {
     try {
-      await deleteChapter(id);
+      await deleteACategory(id);
       fetchChapters();
     } catch (err) {
       console.log(err);
@@ -125,7 +134,7 @@ const Chapters = () => {
                     className="mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black"
                     onClick={() => navigate(`${chap.id}`)}
                   >
-                    Upload Content
+                    Cretae Label
                   </button>
                 </div>
               );
