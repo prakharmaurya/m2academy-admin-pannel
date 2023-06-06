@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
 import {
-  createClassByBoard,
-  deleteClass,
-  getClassessByBoard,
+  createNewCategory,
+  deleteACategory,
+  getAllCategory,
 } from '../../utils/api';
 
 const Board = () => {
@@ -21,10 +21,11 @@ const Board = () => {
     event.preventDefault();
     const data = {
       name: inClass,
-      board_id: params.id * 1,
+      tag: 'class',
+      category_id: params.id * 1,
     };
     try {
-      await createClassByBoard(data);
+      await createNewCategory(data);
       // console.log(res);
       fetchClassess();
       setIsOpen(false);
@@ -41,7 +42,7 @@ const Board = () => {
 
   const delClass = async (id) => {
     try {
-      await deleteClass(id);
+      await deleteACategory(id);
       fetchClassess();
     } catch (err) {
       console.log(err);
@@ -55,9 +56,17 @@ const Board = () => {
 
   const fetchClassess = async () => {
     try {
-      const res = await getClassessByBoard(params.id);
+      const res = await getAllCategory();
       // console.log(res.data);
-      setClassess(res.data.classes);
+      const c = [];
+      res.data.forEach((element) => {
+        if (params.id * 1 === element.category_id && element.tag === 'class') {
+          c.push(element);
+        }
+      });
+      // console.log(params.id);
+      // console.log(c);
+      setClassess(c);
     } catch (err) {
       console.log(err);
       if (err.response) {

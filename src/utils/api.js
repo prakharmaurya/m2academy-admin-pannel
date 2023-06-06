@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { getCookie } from './cookieConfig';
 
-const baseUrl = 'https://api.m2academy.in';
+// const baseUrl = 'http://192.168.2.16:5000';
+const baseUrl = 'https://apiv2.m2academy.in';
+// const baseUrl = 'https://api.m2academy.in';
 // const cid = '2786caca-8a58-4ca9-87be-c55996c4bc11';
 const cid = 'c9492d75-0bb9-47e8-b412-718189704ffa';
 
@@ -36,7 +38,7 @@ let formDataApiClient = axios.create({
     Authorization: `Bearer ${getCookie('token')}`,
     cid: cid,
   },
-  timeout: 30000,
+  timeout: 60000,
 });
 
 export function setFormDataAuthHeader(token) {
@@ -47,70 +49,47 @@ export function setFormDataAuthHeader(token) {
       Authorization: `Bearer ${token}`,
       cid: cid,
     },
-    timeout: 30000,
+    timeout: 60000,
   });
 }
 // ---------------- APIs Calls --------------------
 
 // -------------- Board ----------------------
-export const getBoards = () => {
-  return apiClient.get('/boards');
+export const getAllCategory = () => {
+  return apiClient.get('/categories');
 };
 
-export const createNewBoard = (payload) => {
-  return apiClient.post('/boards', payload);
+export const createNewCategory = (payload) => {
+  return apiClient.post('/categories', payload);
 };
 
-export const deleteBoard = (id) => {
-  return apiClient.delete(`/boards/${id}`);
+export const deleteACategory = (id) => {
+  return apiClient.delete(`/categories/${id}`);
+};
+// --------------------- All Content Data ----------------
+export const getAllContents = (id) => {
+  return apiClient.get(`/categories/data?category_id=${id}`);
+};
+//  ------------- Yt Videos ---------------------
+export const uploadYtVideos = (payload) => {
+  return apiClient.post('/videos', payload);
 };
 
-// -------------- Classess ----------------------
-
-export const getClassessByBoard = (id) => {
-  return apiClient.get(`/classes?board_id=${id}`);
+export const deleteYtVideo = (id) => {
+  return apiClient.delete(`/videos/${id}`);
 };
 
-export const createClassByBoard = (payload) => {
-  return apiClient.post('/classes', payload);
-};
-export const deleteClass = (id) => {
-  return apiClient.delete(`/classes/${id}`);
+//  ------------- Excercise ---------------------
+export const uploadExcercises = (payload) => {
+  return formDataApiClient.post('/excercises', payload);
 };
 
-// -------------- Subjects ----------------------
-
-export const getSubjectsByClass = (id) => {
-  return apiClient.get(`/subjects?class_id=${id}`);
+export const deleteExcercise = (id) => {
+  return apiClient.delete(`/excercises/${id}`);
 };
-
-export const createSubjectByClass = (payload) => {
-  return apiClient.post('/subjects', payload);
-};
-export const deleteSubject = (id) => {
-  return apiClient.delete(`/subjects/${id}`);
-};
-
-// -------------- Chapters ----------------------
-
-export const getChaptersBySubject = (id) => {
-  return apiClient.get(`/chapters?subject_id=${id}`);
-};
-
-export const createChapterBySubject = (payload) => {
-  return apiClient.post('/chapters', payload);
-};
-export const deleteChapter = (id) => {
-  return apiClient.delete(`/chapters/${id}`);
-};
-
 // -------------- Contents ----------------------
 
-export const getContentByChapter = (id) => {
-  return apiClient.get(`/contents?chapter_id=${id}`);
-};
-
-export const uploadContentByChapter = (payload) => {
+export const uploadContents = (payload) => {
   return formDataApiClient.post('/contents', payload);
 };
 export const deleteContent = (id) => {

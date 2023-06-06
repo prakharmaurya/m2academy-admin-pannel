@@ -2,9 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   deleteContent,
-  getContentByChapter,
-  uploadContentByChapter,
-} from '../../../../../utils/api';
+  deleteExcercise,
+  deleteYtVideo,
+  getAllContents,
+  uploadContents,
+  uploadExcercises,
+  uploadYtVideos,
+} from '../../../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
 const Contents = () => {
@@ -16,7 +20,11 @@ const Contents = () => {
   const [isVideo, setIsVideo] = useState(false);
   const [contents, setContents] = useState({});
   const [error, setError] = useState('');
-  const [excercise, setExercise] = useState(null);
+  // ----------- Excercise Section States -----------
+  const [questionFile, setQuestionFile] = useState(null);
+  const [answerFile, setAnswerFile] = useState(null);
+  const [exYtVideoLink, setExYtVideoLink] = useState('');
+  // --------------------------------------------------
   const [note, setNote] = useState(null);
   const [practice, setPractice] = useState(null);
   const [ytLink, setYtLink] = useState('');
@@ -26,14 +34,24 @@ const Contents = () => {
     event.preventDefault();
     try {
       const content = new FormData();
-      content.append('isExcercise', true);
-      content.append('chapterid', params.id * 1);
+
+      content.append('categoryid', params.id * 1);
       content.append('remark', remark);
-      content.append('file', excercise);
-      const res = await uploadContentByChapter(content);
-      console.log(res);
+      content.append('questionfile', questionFile);
+      if (answerFile) {
+        content.append('answerfile', answerFile);
+      }
+      if (exYtVideoLink.length) {
+        content.append('videourl', exYtVideoLink);
+      }
+      const res = await uploadExcercises(content);
+      // console.log(res);
       fetchContents();
       setIsExercise(false);
+      setAnswerFile(null);
+      setQuestionFile(null);
+      setRemark('');
+      setExYtVideoLink('');
       setRemark('');
     } catch (err) {
       console.log(err);
@@ -49,12 +67,12 @@ const Contents = () => {
     event.preventDefault();
     try {
       const content = new FormData();
-      content.append('isnotes', true);
-      content.append('chapterid', params.id * 1);
+      content.append('tag', 'notes');
+      content.append('categoryid', params.id * 1);
       content.append('remark', remark);
       content.append('file', note);
-      const res = await uploadContentByChapter(content);
-      console.log(res);
+      const res = await uploadContents(content);
+      // console.log(res);
       fetchContents();
       setIsNotes(false);
       setRemark('');
@@ -72,12 +90,12 @@ const Contents = () => {
     event.preventDefault();
     try {
       const content = new FormData();
-      content.append('ispractice', true);
-      content.append('chapterid', params.id * 1);
+      content.append('tag', 'practice');
+      content.append('categoryid', params.id * 1);
       content.append('remark', remark);
       content.append('file', practice);
-      const res = await uploadContentByChapter(content);
-      console.log(res);
+      const res = await uploadContents(content);
+      // console.log(res);
       fetchContents();
       setIsPractice(false);
       setRemark('');
@@ -91,16 +109,13 @@ const Contents = () => {
     }
   };
 
-  const uploadYtVideo = async (event) => {
+  // --------------- Yt Video -----------------
+  const uploadYoutubeVideo = async (event) => {
     event.preventDefault();
     try {
-      const content = new FormData();
-      content.append('isvideo', true);
-      content.append('chapterid', params.id * 1);
-      content.append('remark', remark);
-      content.append('link', ytLink);
-      const res = await uploadContentByChapter(content);
-      console.log(res);
+      const d = { category_id: params.id * 1, url: ytLink };
+      const res = await uploadYtVideos(d);
+      // console.log(res);
       fetchContents();
       setIsVideo(false);
       setRemark('');
@@ -114,11 +129,26 @@ const Contents = () => {
     }
   };
 
+  const delYtVideo = async (id) => {
+    try {
+      await deleteYtVideo(id);
+      fetchContents();
+    } catch (err) {
+      console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
+    }
+  };
+
+  // -------------------------------------------------
   const fetchContents = async () => {
     try {
-      const res = await getContentByChapter(params.id);
-      console.log(res.data.contents);
-      setContents(res.data.contents);
+      const res = await getAllContents(params.id * 1);
+      // console.log(res);
+      setContents(res.data);
     } catch (err) {
       console.log(err);
       if (err.response) {
@@ -132,6 +162,20 @@ const Contents = () => {
     }
   };
 
+  const delExContent = async (id) => {
+    try {
+      await deleteExcercise(id);
+      fetchContents();
+    } catch (err) {
+      console.log(err);
+      if (err.response) {
+        if (err.response.data) {
+          alert(err.response.data.message);
+        }
+      }
+    }
+  };
+  // ------------- Contents --------
   const delContent = async (id) => {
     try {
       await deleteContent(id);
@@ -201,19 +245,52 @@ const Contents = () => {
             <div className="py-2 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5">
               {contents?.excercises?.map((excercise) => {
                 return (
-                  <div key={excercise.id}>
-                    <p>{excercise.remark}</p>
+                  <div key={excercise.id} className="border p-2">
+                    <p className="capitalize pb-2 font-semibold">
+                      {excercise.remark}
+                    </p>
                     <div className="relative">
-                      <img src={excercise.url} alt="excercise" />
+                      <img
+                        className="h-60 w-full object-contain"
+                        src={`https://storage.googleapis.com/ecoaching/${excercise.question_url}`}
+                        alt="question"
+                      />
                       <div className="absolute top-2 right-2">
                         <button
                           className="text-red-500 rounded-full bg-gray-300 p-2"
-                          onClick={() => delContent(excercise.id)}
+                          onClick={() => delExContent(excercise.id)}
                         >
                           <BsTrash size={20} />
                         </button>
                       </div>
                     </div>
+                    {excercise?.answer_url?.length && (
+                      <>
+                        <p className="capitalize font-semibold mt-3 pb-2 border-t">
+                          Solution
+                        </p>
+                        <img
+                          className="h-60 w-60 object-contain"
+                          src={`https://storage.googleapis.com/ecoaching/${excercise.answer_url}`}
+                          alt="answer"
+                        />
+                      </>
+                    )}
+                    {excercise?.video_url && (
+                      <>
+                        <p className="capitalize font-semibold mt-3 pb-2 border-t">
+                          Solution Video
+                        </p>
+                        <iframe
+                          width="255"
+                          height="158"
+                          src={excercise.video_url}
+                          title="YouTube video player"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                          allowFullScreen
+                        ></iframe>
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -221,65 +298,73 @@ const Contents = () => {
           </div>
         )}
         {/* -------- Notes -------------- */}
-        {contents?.notes?.length > 0 && (
+        {contents?.contents?.length > 0 && (
           <div className="py-5">
             <h3 className="text-2xl font-semibold">Notes</h3>
-            {contents?.notes?.map((note) => {
+            {contents?.contents?.map((note) => {
               return (
-                <div
-                  key={note.id}
-                  className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
-                >
-                  <p className="text-sm capitalize font-semibold">
-                    {note.remark}
-                  </p>
-                  <div className="flex gap-2">
-                    <a
-                      onClick={() => window.open(note.url)}
-                      className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+                <>
+                  {note.tag === 'notes' && (
+                    <div
+                      key={note.id}
+                      className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
                     >
-                      download
-                    </a>
-                    <button
-                      className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delContent(note.id)}
-                    >
-                      <BsTrash size={20} />
-                    </button>
-                  </div>
-                </div>
+                      <p className="text-sm capitalize font-semibold">
+                        {note.remark}
+                      </p>
+                      <div className="flex gap-2">
+                        <a
+                          onClick={() => window.open(note.file_url)}
+                          className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+                        >
+                          download
+                        </a>
+                        <button
+                          className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
+                          onClick={() => delContent(note.id)}
+                        >
+                          <BsTrash size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               );
             })}
           </div>
         )}
         {/* -------- Practices -------------- */}
-        {contents?.practices?.length > 0 && (
+        {contents?.contents?.length > 0 && (
           <div className="py-5">
             <h3 className="text-2xl font-semibold">Practices</h3>
-            {contents?.practices?.map((practice) => {
+            {contents?.contents?.map((practice) => {
               return (
-                <div
-                  key={practice.id}
-                  className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
-                >
-                  <p className="text-sm capitalize font-semibold">
-                    {practice.remark}
-                  </p>
-                  <div className="flex gap-2">
-                    <a
-                      onClick={() => window.open(practice.url)}
-                      className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+                <>
+                  {practice.tag === 'practice' && (
+                    <div
+                      key={practice.id}
+                      className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
                     >
-                      download
-                    </a>
-                    <button
-                      className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delContent(practice.id)}
-                    >
-                      <BsTrash size={20} />
-                    </button>
-                  </div>
-                </div>
+                      <p className="text-sm capitalize font-semibold">
+                        {practice.remark}
+                      </p>
+                      <div className="flex gap-2">
+                        <a
+                          onClick={() => window.open(practice.file_url)}
+                          className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+                        >
+                          download
+                        </a>
+                        <button
+                          className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
+                          onClick={() => delContent(practice.id)}
+                        >
+                          <BsTrash size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               );
             })}
           </div>
@@ -297,11 +382,10 @@ const Contents = () => {
                   <iframe
                     width="560"
                     height="315"
-                    src="https://www.youtube.com/embed/pzzPowh241o"
+                    src={video.url}
                     title="YouTube video player"
-                    frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
+                    allowFullScreen
                   ></iframe>
                   <div>
                     <p className="text-sm capitalize font-semibold">
@@ -309,7 +393,7 @@ const Contents = () => {
                     </p>
                     <button
                       className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delContent(video.id)}
+                      onClick={() => delYtVideo(video.id)}
                     >
                       <BsTrash size={20} />
                     </button>
@@ -360,15 +444,29 @@ const Contents = () => {
                     className="py-10 flex flex-col gap-5"
                   >
                     <div className="flex flex-col gap-1">
-                      <label className="text-sm">Upload Excercise</label>
+                      <label className="text-sm">Upload Question*</label>
                       <input
                         required
                         type="file"
                         accept="image/*"
                         className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setExercise(e.target.files[0])}
+                        onChange={(e) => setQuestionFile(e.target.files[0])}
                       />
-                      <label className="text-sm">Remark</label>
+                      <label className="text-sm">Upload Answer</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
+                        onChange={(e) => setAnswerFile(e.target.files[0])}
+                      />
+                      <label className="text-sm">Video URL</label>
+                      <input
+                        type="text"
+                        placeholder="Enter Youtube Video URL"
+                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
+                        onChange={(e) => setExYtVideoLink(e.target.value)}
+                      />
+                      <label className="text-sm">Remark*</label>
                       <input
                         required
                         type="text"
@@ -527,7 +625,7 @@ const Contents = () => {
                     Upload Youtube Video
                   </p>
                   <form
-                    onSubmit={uploadYtVideo}
+                    onSubmit={uploadYoutubeVideo}
                     className="py-10 flex flex-col gap-5"
                   >
                     <div className="flex flex-col gap-1">
@@ -539,14 +637,14 @@ const Contents = () => {
                         className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
                         onChange={(e) => setYtLink(e.target.value)}
                       />
-                      <label className="text-sm">Remark</label>
+                      {/* <label className="text-sm">Remark</label>
                       <input
                         required
                         type="text"
                         placeholder="Enter Your Remark"
                         className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
                         onChange={(e) => setRemark(e.target.value)}
-                      />
+                      /> */}
                     </div>
                     <div className="flex justify-center">
                       <button

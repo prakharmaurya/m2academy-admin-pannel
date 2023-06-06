@@ -8,7 +8,8 @@ import NotFound from './pages/NotFound';
 import Board from './pages/[board]';
 import Classes from './pages/[board]/[classes]';
 import Chapters from './pages/[board]/[classes]/[chapters]';
-import Contents from './pages/[board]/[classes]/[chapters]/[contents]';
+import Lable from './pages/[board]/[classes]/[chapters]/label';
+import Contents from './pages/[board]/[classes]/[chapters]/label/contents';
 function App() {
   return (
     <>
@@ -25,6 +26,10 @@ function App() {
         />
         <Route
           path="/:id/:id/:id/:id"
+          element={<Protected Component={Lable} />}
+        />
+        <Route
+          path="/:id/:id/:id/:id/:id"
           element={<Protected Component={Contents} />}
         />
         <Route path="*" element={<NotFound />} />
