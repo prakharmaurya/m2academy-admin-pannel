@@ -8,7 +8,7 @@ import {
   uploadContents,
   uploadExcercises,
   uploadYtVideos,
-} from '../../../../../../utils/api';
+} from '../../../../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
 const Contents = () => {

@@ -4,32 +4,37 @@ import {
   createNewCategory,
   deleteACategory,
   getAllCategory,
-} from '../../../../../utils/api';
+} from '../../../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
 
-const Label = () => {
+const ChapterLabel = () => {
   const params = useParams();
   const navigate = useNavigate();
 
+  const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [labels, setLabels] = useState([]);
-  const [inLabel, setInLabel] = useState('');
+  const [inChapterLabel, setInChapterLabel] = useState('');
   const [error, setError] = useState('');
 
-  const createLabel = async (event) => {
+  const createChapterLabel = async (event) => {
+    setIsLoading(true);
     event.preventDefault();
     try {
       const data = {
-        name: inLabel,
-        tag: 'label',
+        name: inChapterLabel,
+        tag: 'chapter label',
         category_id: params.id * 1,
       };
       await createNewCategory(data);
-      fetchLabels();
+      fetchChapterLabels();
       setIsOpen(false);
+      setIsLoading(false);
     } catch (err) {
       console.log(err);
+      setIsLoading(false);
+
       if (err.response) {
         if (err.response.data) {
           alert(err.response.data.message);
@@ -38,13 +43,16 @@ const Label = () => {
     }
   };
 
-  const fetchLabels = async () => {
+  const fetchChapterLabels = async () => {
     try {
       const res = await getAllCategory();
       // console.log(res.data);
       const c = [];
       res.data.forEach((element) => {
-        if (params.id * 1 === element.category_id && element.tag === 'label') {
+        if (
+          params.id * 1 === element.category_id &&
+          element.tag === 'chapter label'
+        ) {
           c.push(element);
         }
       });
@@ -55,17 +63,17 @@ const Label = () => {
         if (err.response.data) {
           setError(err.response.data.message);
         }
-        if (err.response.data.message === 'labels not found') {
+        if (err.response.data.message === 'Chapter labels not found') {
           setLabels([]);
         }
       }
     }
   };
 
-  const delLabel = async (id) => {
+  const delChapterLabel = async (id) => {
     try {
       await deleteACategory(id);
-      fetchLabels();
+      fetchChapterLabels();
     } catch (err) {
       console.log(err);
       if (err.response) {
@@ -77,19 +85,19 @@ const Label = () => {
   };
 
   useEffect(() => {
-    fetchLabels();
+    fetchChapterLabels();
   }, []);
 
   return (
     <div>
       <div className="max-w-7xl container mx-auto px-4 py-5">
         <div className="flex justify-between items-center mb-5">
-          <h3 className="text-2xl font-semibold">Labels</h3>
+          <h3 className="text-2xl font-semibold">Chapter Label</h3>
           <button
             className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
             onClick={() => setIsOpen(true)}
           >
-            Create Label
+            Create Chapter Label
           </button>
         </div>
         {/* ------- Error ---------- */}
@@ -101,7 +109,7 @@ const Label = () => {
                 className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
                 onClick={() => setIsOpen(true)}
               >
-                Create Label
+                Create chapter Label
               </button>
             </div>
           </div>
@@ -121,7 +129,7 @@ const Label = () => {
                     </h4>
                     <button
                       className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delLabel(label.id)}
+                      onClick={() => delChapterLabel(label.id)}
                     >
                       <BsTrash size={20} />
                     </button>
@@ -131,7 +139,7 @@ const Label = () => {
                     className="mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black"
                     onClick={() => navigate(`${label.id}`)}
                   >
-                    Create Chapter Label
+                    upload Content
                   </button>
                 </div>
               );
@@ -158,28 +166,31 @@ const Label = () => {
               <div className=" flex justify-center">
                 <div className="px-3 py-8 w-full">
                   <p className="text-center text-xl text-blue-500 font-semibold">
-                    Create Class
+                    Create Chapter Label
                   </p>
                   <form
-                    onSubmit={createLabel}
+                    onSubmit={createChapterLabel}
                     className="py-10 flex flex-col gap-5"
                   >
                     <div className="flex flex-col gap-1">
-                      <label className="text-sm">Chapter Name</label>
+                      <label className="text-sm">Chapter Label</label>
                       <input
                         required
                         type="text"
-                        placeholder="Enter Your Chapter Name"
+                        placeholder="Enter Chapter Label"
                         className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setInLabel(e.target.value)}
+                        onChange={(e) => setInChapterLabel(e.target.value)}
                       />
                     </div>
                     <div className="flex justify-center">
                       <button
+                        disabled={isLoading ? true : false}
                         type="submit"
                         className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
                       >
-                        Create Chapter
+                        {!isLoading
+                          ? 'Create Chapter Label'
+                          : 'Creating Chapter....'}
                       </button>
                     </div>
                   </form>
@@ -193,4 +204,4 @@ const Label = () => {
   );
 };
 
-export default Label;
+export default ChapterLabel;
