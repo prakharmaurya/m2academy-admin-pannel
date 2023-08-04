@@ -4,8 +4,8 @@ import { getCookie } from './cookieConfig';
 // const baseUrl = 'http://192.168.2.16:5000';
 const baseUrl = 'https://apiv2.m2academy.in';
 // const baseUrl = 'https://api.m2academy.in';
-// const cid = '2786caca-8a58-4ca9-87be-c55996c4bc11';
-const cid = 'c9492d75-0bb9-47e8-b412-718189704ffa';
+// const cid = '2786caca-8a58-4ca9-87be-c55996c4bc11'; // inflection cid
+const cid = 'c9492d75-0bb9-47e8-b412-718189704ffa'; // meet cid
 
 // ------------- Creating axios instance --------------
 let apiClient = axios.create({

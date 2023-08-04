@@ -9,7 +9,8 @@ import Board from './pages/[board]';
 import Classes from './pages/[board]/[classes]';
 import Chapters from './pages/[board]/[classes]/[chapters]';
 import Lable from './pages/[board]/[classes]/[chapters]/label';
-import Contents from './pages/[board]/[classes]/[chapters]/label/contents';
+import ChapterLabel from './pages/[board]/[classes]/[chapters]/label/chapterLabel';
+import Contents from './pages/[board]/[classes]/[chapters]/label/chapterLabel/contents';
 function App() {
   return (
     <>
@@ -30,6 +31,10 @@ function App() {
         />
         <Route
           path="/:id/:id/:id/:id/:id"
+          element={<Protected Component={ChapterLabel} />}
+        />
+        <Route
+          path="/:id/:id/:id/:id/:id/:id"
           element={<Protected Component={Contents} />}
         />
         <Route path="*" element={<NotFound />} />
