@@ -246,9 +246,7 @@ const Contents = () => {
               {contents?.excercises?.map((excercise) => {
                 return (
                   <div key={excercise.id} className="border p-2">
-                    <p className="capitalize pb-2 font-semibold">
-                      {excercise.remark}
-                    </p>
+                    <p className="pb-2 font-semibold">{excercise.remark}</p>
                     <div className="relative">
                       <img
                         className="h-60 w-full object-contain"
