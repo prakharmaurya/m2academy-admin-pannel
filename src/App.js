@@ -1,3 +1,4 @@
+import { createContext, useEffect, useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/app/Navbar';
 import Protected from './hook/Protected';
@@ -11,10 +12,34 @@ import Chapters from './pages/[board]/[classes]/[chapters]';
 import Lable from './pages/[board]/[classes]/[chapters]/label';
 import ChapterLabel from './pages/[board]/[classes]/[chapters]/label/chapterLabel';
 import Contents from './pages/[board]/[classes]/[chapters]/label/chapterLabel/contents';
+import Snackbar from './components/app/Snacker';
+
+export const Context = createContext();
+
 function App() {
+  const [isShowSnack, setIsShowSnack] = useState(true);
+  const [snackDetail, setSnackDetail] = useState({ type: '', msg: '' });
+
+  useEffect(() => {
+    if (isShowSnack) {
+      const timeOut = setTimeout(() => {
+        setIsShowSnack(false);
+      }, 5000);
+
+      return () => clearTimeout(timeOut);
+    }
+  }, [isShowSnack]);
+
   return (
-    <>
+    <Context.Provider value={{ setIsShowSnack, setSnackDetail }}>
       <Navbar />
+      {isShowSnack && (
+        <Snackbar
+          type={snackDetail.type}
+          message={snackDetail.msg}
+          closeSnackbar={() => setIsShowSnack(false)}
+        />
+      )}
       <Routes>
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/forgot_password" element={<ForgotPassword />} />
@@ -39,7 +64,7 @@ function App() {
         />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </>
+    </Context.Provider>
   );
 }
 
