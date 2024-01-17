@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   createNewCategory,
   deleteACategory,
@@ -8,9 +8,13 @@ import { BsTrash } from 'react-icons/bs';
 import { MdOutlineClose } from 'react-icons/md';
 import { useNavigate } from 'react-router-dom';
 
-const Home = () => {
-  const navigate = useNavigate();
+import { Context } from '../App';
+import Loader from '../components/ui/Loader';
 
+const Home = () => {
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [boards, setBoards] = useState([]);
   const [board, setBoard] = useState('');
@@ -29,28 +33,36 @@ const Home = () => {
       setIsOpen(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setIsShowSnack(true);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
         }
       }
     }
   };
 
   const delBoard = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchBoards();
-      alert('Board deleted successfully');
+      setIsShowSnack(true);
+      setSnackDetail({ type: 'success', msg: 'Board deleted successfully' });
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setIsShowSnack(true);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchBoards = async () => {
+    setLoading(true);
     try {
       setError('');
       const res = await getAllCategory();
@@ -63,17 +75,21 @@ const Home = () => {
       });
       // console.log(b);
       setBoards(b);
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          setError(err.response.data.message);
+          setIsShowSnack(true);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
         }
         if (err.response.data.message === 'no boards found') {
           setBoards([]);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -189,6 +205,7 @@ const Home = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };
