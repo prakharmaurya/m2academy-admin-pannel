@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   createNewCategory,
@@ -7,19 +7,22 @@ import {
 } from '../../../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
+import Loader from '../../../../../../components/ui/Loader';
+import { Context } from '../../../../../../App';
 
 const ChapterLabel = () => {
   const params = useParams();
   const navigate = useNavigate();
 
-  const [isLoading, setIsLoading] = useState(false);
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [labels, setLabels] = useState([]);
   const [inChapterLabel, setInChapterLabel] = useState('');
   const [error, setError] = useState('');
 
   const createChapterLabel = async (event) => {
-    setIsLoading(true);
+    setLoading(true);
     event.preventDefault();
     try {
       const data = {
@@ -30,20 +33,23 @@ const ChapterLabel = () => {
       await createNewCategory(data);
       fetchChapterLabels();
       setIsOpen(false);
-      setIsLoading(false);
+      setLoading(false);
     } catch (err) {
       console.log(err);
-      setIsLoading(false);
+      setLoading(false);
 
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchChapterLabels = async () => {
+    setLoading(true);
     try {
       const res = await getAllCategory();
       // console.log(res.data);
@@ -57,31 +63,41 @@ const ChapterLabel = () => {
         }
       });
       setLabels(c);
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
         if (err.response.data.message === 'Chapter labels not found') {
           setLabels([]);
         }
       }
     }
+    setLoading(false);
   };
 
   const delChapterLabel = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchChapterLabels();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -147,7 +163,7 @@ const ChapterLabel = () => {
           </div>
         )}
 
-        {/* ------------ Create New Class Pop up ------------------ */}
+        {/* ------------ Create New Chapter Label Pop up ------------------ */}
         {isOpen && (
           <div
             className={`${
@@ -184,11 +200,11 @@ const ChapterLabel = () => {
                     </div>
                     <div className="flex justify-center">
                       <button
-                        disabled={isLoading ? true : false}
+                        disabled={loading ? true : false}
                         type="submit"
                         className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
                       >
-                        {!isLoading
+                        {!loading
                           ? 'Create Chapter Label'
                           : 'Creating Chapter....'}
                       </button>
@@ -200,6 +216,7 @@ const ChapterLabel = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };

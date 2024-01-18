@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   createNewCategory,
@@ -7,11 +7,14 @@ import {
 } from '../../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
+import Loader from '../../../../../components/ui/Loader';
+import { Context } from '../../../../../App';
 
 const Label = () => {
   const params = useParams();
   const navigate = useNavigate();
-
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [labels, setLabels] = useState([]);
   const [inLabel, setInLabel] = useState('');
@@ -19,6 +22,7 @@ const Label = () => {
 
   const createLabel = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const data = {
         name: inLabel,
@@ -28,17 +32,22 @@ const Label = () => {
       await createNewCategory(data);
       fetchLabels();
       setIsOpen(false);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchLabels = async () => {
+    setLoading(true);
     try {
       const res = await getAllCategory();
       // console.log(res.data);
@@ -49,31 +58,41 @@ const Label = () => {
         }
       });
       setLabels(c);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
         if (err.response.data.message === 'labels not found') {
           setLabels([]);
         }
       }
     }
+    setLoading(false);
   };
 
   const delLabel = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchLabels();
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -189,6 +208,7 @@ const Label = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };

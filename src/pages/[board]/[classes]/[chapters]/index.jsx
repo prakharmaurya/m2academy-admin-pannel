@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   createNewCategory,
@@ -7,11 +7,14 @@ import {
 } from '../../../../utils/api';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
+import { Context } from '../../../../App';
+import Loader from '../../../../components/ui/Loader';
 
 const Chapters = () => {
   const params = useParams();
   const navigate = useNavigate();
-
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [chapters, setChapters] = useState([]);
   const [inChapter, setInChapter] = useState('');
@@ -19,6 +22,7 @@ const Chapters = () => {
 
   const createChapter = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const data = {
         name: inChapter,
@@ -28,17 +32,22 @@ const Chapters = () => {
       await createNewCategory(data);
       fetchChapters();
       setIsOpen(false);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchChapters = async () => {
+    setLoading(true);
     try {
       const res = await getAllCategory();
       // console.log(res.data);
@@ -52,31 +61,41 @@ const Chapters = () => {
         }
       });
       setChapters(c);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
         if (err.response.data.message === 'chapters not found') {
           setChapters([]);
         }
       }
     }
+    setLoading(false);
   };
 
   const delChapter = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchChapters();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -192,6 +211,7 @@ const Chapters = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };
