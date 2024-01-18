@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   deleteContent,
@@ -9,11 +9,18 @@ import {
   uploadExcercises,
   uploadYtVideos,
 } from '../../../../../../../utils/api';
+
+import { Context } from '../../../../../../../App';
+
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
+import Loader from '../../../../../../../components/ui/Loader';
+
 const Contents = () => {
   const params = useParams();
 
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isExcercise, setIsExercise] = useState(false);
   const [isNotes, setIsNotes] = useState(false);
   const [isPractice, setIsPractice] = useState(false);
@@ -32,6 +39,7 @@ const Contents = () => {
 
   const uploadExcercise = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const content = new FormData();
 
@@ -53,18 +61,23 @@ const Contents = () => {
       setRemark('');
       setExYtVideoLink('');
       setRemark('');
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const uploadNotes = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const content = new FormData();
       content.append('tag', 'notes');
@@ -76,18 +89,23 @@ const Contents = () => {
       fetchContents();
       setIsNotes(false);
       setRemark('');
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const uploadPractice = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const content = new FormData();
       content.append('tag', 'practice');
@@ -99,19 +117,24 @@ const Contents = () => {
       fetchContents();
       setIsPractice(false);
       setRemark('');
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   // --------------- Yt Video -----------------
   const uploadYoutubeVideo = async (event) => {
     event.preventDefault();
+    setLoading(true);
     try {
       const d = { category_id: params.id * 1, url: ytLink };
       const res = await uploadYtVideos(d);
@@ -119,75 +142,100 @@ const Contents = () => {
       fetchContents();
       setIsVideo(false);
       setRemark('');
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const delYtVideo = async (id) => {
+    setLoading(true);
     try {
       await deleteYtVideo(id);
       fetchContents();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   // -------------------------------------------------
   const fetchContents = async () => {
+    setLoading(true);
     try {
       const res = await getAllContents(params.id * 1);
       // console.log(res);
       setContents(res.data);
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
         if (err.response.data.message === 'contents not found') {
           setContents({});
         }
       }
     }
+    setLoading(false);
   };
 
   const delExContent = async (id) => {
+    setLoading(true);
     try {
       await deleteExcercise(id);
       fetchContents();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
   // ------------- Contents --------
   const delContent = async (id) => {
+    setLoading(true);
     try {
       await deleteContent(id);
       fetchContents();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -659,6 +707,7 @@ const Contents = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };
