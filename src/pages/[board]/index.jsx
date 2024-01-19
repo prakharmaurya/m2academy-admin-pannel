@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
@@ -7,11 +7,15 @@ import {
   deleteACategory,
   getAllCategory,
 } from '../../utils/api';
+import { Context } from '../../App';
+import Loader from '../../components/ui/Loader';
 
 const Board = () => {
   const params = useParams();
   const navigate = useNavigate();
 
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [classess, setClassess] = useState([]);
   const [inClass, setClass] = useState('');
@@ -19,6 +23,7 @@ const Board = () => {
 
   const createClass = async (event) => {
     event.preventDefault();
+    setLoading(true);
     const data = {
       name: inClass,
       tag: 'class',
@@ -29,29 +34,38 @@ const Board = () => {
       // console.log(res);
       fetchClassess();
       setIsOpen(false);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       setIsOpen(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const delClass = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchClassess();
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchClassess = async () => {
@@ -193,6 +207,7 @@ const Board = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };

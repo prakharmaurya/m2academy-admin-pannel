@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MdOutlineClose } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
@@ -8,11 +8,14 @@ import {
   deleteACategory,
   getAllCategory,
 } from '../../../utils/api';
+import Loader from '../../../components/ui/Loader';
+import { Context } from '../../../App';
 
 const Classes = () => {
   const params = useParams();
   const navigate = useNavigate();
-
+  const { setIsShowSnack, setSnackDetail } = useContext(Context);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [allSubjects, setAllSubjects] = useState([]);
   const [inSub, setInSub] = useState('');
@@ -20,6 +23,7 @@ const Classes = () => {
 
   const createSubject = async (event) => {
     event.preventDefault();
+    setLoading(true);
     const data = {
       name: inSub,
       tag: 'subject',
@@ -29,31 +33,41 @@ const Classes = () => {
       await createNewCategory(data);
       fetchAllSubjects();
       setIsOpen(false);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const delSubject = async (id) => {
+    setLoading(true);
     try {
       await deleteACategory(id);
       fetchAllSubjects();
+      setLoading(false);
     } catch (err) {
       console.log(err);
+      setLoading(false);
       if (err.response) {
         if (err.response.data) {
-          alert(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
       }
     }
+    setLoading(false);
   };
 
   const fetchAllSubjects = async () => {
+    setLoading(true);
     try {
       const res = await getAllCategory();
       // console.log(res);
@@ -67,17 +81,22 @@ const Classes = () => {
         }
       });
       setAllSubjects(s);
+      setLoading(false);
     } catch (err) {
+      setLoading(false);
       console.log(err);
       if (err.response) {
         if (err.response.data) {
           setError(err.response.data.message);
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
         }
         if (err.response.data.message === 'subjects not found') {
           setAllSubjects([]);
         }
       }
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -193,6 +212,7 @@ const Classes = () => {
           </div>
         )}
       </div>
+      {loading && <Loader />}
     </div>
   );
 };

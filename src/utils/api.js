@@ -84,6 +84,10 @@ export const uploadExcercises = (payload) => {
   return formDataApiClient.post('/excercises', payload);
 };
 
+export const editExcercises = (id, payload) => {
+  return formDataApiClient.patch(`/excercises/${id}`, payload);
+};
+
 export const deleteExcercise = (id) => {
   return apiClient.delete(`/excercises/${id}`);
 };
