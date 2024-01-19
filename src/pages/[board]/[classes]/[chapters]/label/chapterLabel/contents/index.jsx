@@ -8,11 +8,12 @@ import {
   uploadContents,
   uploadExcercises,
   uploadYtVideos,
+  editExcercises,
 } from '../../../../../../../utils/api';
 
 import { Context } from '../../../../../../../App';
 
-import { MdOutlineClose } from 'react-icons/md';
+import { MdOutlineClose, MdModeEdit } from 'react-icons/md';
 import { BsTrash } from 'react-icons/bs';
 import Loader from '../../../../../../../components/ui/Loader';
 
@@ -31,6 +32,19 @@ const Contents = () => {
   const [questionFile, setQuestionFile] = useState(null);
   const [answerFile, setAnswerFile] = useState(null);
   const [exYtVideoLink, setExYtVideoLink] = useState('');
+
+  const [currentExId, setCurrentExId] = useState('');
+  //  Edit Question
+  const [isQuestionPopupOpen, setIsQuestionPopupOpen] = useState(false);
+  const [questionThumbnail, setQuestionThumbnail] = useState(null);
+  const [prevQuestionImage, setPrevQuestionImage] = useState(null);
+  //  Edit Solution
+  const [isSolutionPopupOpen, setIsSolutionPopupOpen] = useState(false);
+  const [solutionThumbnail, setSolutionThumbnail] = useState(null);
+  const [prevSolutionImage, setPrevSolutionImage] = useState(null);
+  // Edit Yt State
+  const [showYtUrlInput, setShowYtUrlInput] = useState(false);
+  const [ytEditLink, setYtEditLink] = useState('');
   // --------------------------------------------------
   const [note, setNote] = useState(null);
   const [practice, setPractice] = useState(null);
@@ -237,6 +251,104 @@ const Contents = () => {
     }
     setLoading(false);
   };
+  // ------------ Edit ----------------------
+  const onQusetionImageChange = (event) => {
+    setQuestionThumbnail(event.target.files[0]);
+    if (event.target.files && event.target.files[0]) {
+      setPrevQuestionImage(URL.createObjectURL(event.target.files[0]));
+    }
+  };
+  const onSolutionImageChange = (event) => {
+    setSolutionThumbnail(event.target.files[0]);
+    if (event.target.files && event.target.files[0]) {
+      setPrevSolutionImage(URL.createObjectURL(event.target.files[0]));
+    }
+  };
+
+  const editQuestion = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const content = new FormData();
+      content.append('questionfile', questionThumbnail);
+      const { data } = await editExcercises(currentExId, content);
+      console.log(data);
+      fetchContents();
+      setIsQuestionPopupOpen(false);
+      setSnackDetail({ type: 'success', msg: data.message });
+      setIsShowSnack(true);
+      setLoading(false);
+      setPrevQuestionImage(null);
+      setQuestionThumbnail(null);
+    } catch (err) {
+      console.log(err);
+      setPrevQuestionImage(null);
+      setQuestionThumbnail(null);
+      setLoading(false);
+      if (err.response) {
+        if (err.response.data) {
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
+        }
+      }
+      setIsQuestionPopupOpen(false);
+    }
+  };
+  const editSolution = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const content = new FormData();
+      content.append('answerfile', solutionThumbnail);
+      const { data } = await editExcercises(currentExId, content);
+      // console.log(data);
+      fetchContents();
+      setIsSolutionPopupOpen(false);
+      setSnackDetail({ type: 'success', msg: data.message });
+      setIsShowSnack(true);
+      setLoading(false);
+      setPrevSolutionImage(null);
+      setSolutionThumbnail(null);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+      setPrevSolutionImage(null);
+      setSolutionThumbnail(null);
+      if (err.response) {
+        if (err.response.data) {
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
+        }
+      }
+      setIsSolutionPopupOpen(false);
+    }
+  };
+
+  const editYtLink = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const content = new FormData();
+      content.append('videourl', ytEditLink);
+      const { data } = await editExcercises(currentExId, content);
+      // console.log(data);
+      fetchContents();
+      setShowYtUrlInput(false);
+      setSnackDetail({ type: 'success', msg: data.message });
+      setIsShowSnack(true);
+      setLoading(false);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
+      if (err.response) {
+        if (err.response.data) {
+          setSnackDetail({ type: 'error', msg: err.response.data.message });
+          setIsShowSnack(true);
+        }
+      }
+      setShowYtUrlInput(false);
+    }
+  };
 
   useEffect(() => {
     fetchContents();
@@ -301,28 +413,147 @@ const Contents = () => {
                         src={`https://storage.googleapis.com/ecoaching/${excercise.question_url}`}
                         alt="question"
                       />
-                      <div className="absolute top-2 right-2">
+                      <div className="absolute top-2 right-2 grid gap-2">
                         <button
-                          className="text-red-500 rounded-full bg-gray-300 p-2"
+                          className="text-red-500 rounded-full bg-gray-100 p-2 duration-150 hover:text-red-600 hover:bg-gray-200 hover:shadow-md"
                           onClick={() => delExContent(excercise.id)}
                         >
                           <BsTrash size={20} />
                         </button>
+
+                        <button
+                          className="text-gray-500 rounded-full bg-gray-100 p-2 duration-150 hover:text-gray-900 hover:bg-gray-200 hover:shadow-md"
+                          onClick={() => {
+                            setCurrentExId(excercise.id);
+                            setIsQuestionPopupOpen(true);
+                          }}
+                        >
+                          <MdModeEdit size={20} />
+                        </button>
                       </div>
+                      {isQuestionPopupOpen && (
+                        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                          <form
+                            onSubmit={editQuestion}
+                            className="relative bg-white w-1/2 p-10 rounded shadow-md"
+                          >
+                            <div
+                              onClick={() => {
+                                setPrevQuestionImage(null);
+                                setQuestionThumbnail(null);
+                                setIsQuestionPopupOpen(false);
+                              }}
+                              className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
+                            >
+                              <MdOutlineClose size={30} />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-sm md:text-sm">
+                                Question
+                              </label>
+                              <input
+                                required
+                                type="file"
+                                accept="image/*"
+                                onChange={onQusetionImageChange}
+                                className="text-sm px-4 py-2 border border-black rounded-sm outline-black focus:border-none focus:outline focus:outline-blue-500"
+                              />
+                              {prevQuestionImage && (
+                                <img
+                                  alt="preview prevImage"
+                                  src={prevQuestionImage}
+                                  className="h-32 object-contain"
+                                />
+                              )}
+                              <button
+                                type="submit"
+                                className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
+                              >
+                                Submit
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
                     </div>
-                    {excercise?.answer_url?.length && (
+                    {excercise?.answer_url?.length ? (
                       <>
                         <p className="capitalize font-semibold mt-3 pb-2 border-t">
                           Solution
                         </p>
+                        <button
+                          onClick={() => {
+                            setCurrentExId(excercise.id);
+                            setIsSolutionPopupOpen(true);
+                          }}
+                          className="bg-blue-600 text-xs p-2 rounded-sm text-white"
+                        >
+                          edit solution
+                        </button>
                         <img
                           className="h-60 w-60 object-contain"
                           src={`https://storage.googleapis.com/ecoaching/${excercise.answer_url}`}
                           alt="answer"
                         />
                       </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setCurrentExId(excercise.id);
+                          setIsSolutionPopupOpen(true);
+                        }}
+                        className="bg-blue-600 text-xs p-2 rounded-sm text-white"
+                      >
+                        upload solution
+                      </button>
                     )}
-                    {excercise?.video_url && (
+
+                    {isSolutionPopupOpen && (
+                      <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                        <form
+                          onSubmit={editSolution}
+                          className="relative bg-white w-1/2 p-10 rounded shadow-md"
+                        >
+                          <div
+                            onClick={() => {
+                              setPrevSolutionImage(null);
+                              setSolutionThumbnail(null);
+                              setIsSolutionPopupOpen(false);
+                            }}
+                            className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
+                          >
+                            <MdOutlineClose size={30} />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-sm md:text-sm">
+                              Thumbnail
+                            </label>
+                            <input
+                              required
+                              type="file"
+                              accept="image/*"
+                              onChange={onSolutionImageChange}
+                              className="text-sm px-4 py-2 border border-black rounded-sm outline-black focus:border-none focus:outline focus:outline-blue-500"
+                            />
+                            {prevSolutionImage && (
+                              <img
+                                alt="preview prevImage"
+                                src={prevSolutionImage}
+                                className="h-32 object-contain"
+                              />
+                            )}
+                            <button
+                              type="submit"
+                              className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
+                            >
+                              Submit
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {excercise?.video_url ? (
                       <>
                         <p className="capitalize font-semibold mt-3 pb-2 border-t">
                           Solution Video
@@ -335,7 +566,59 @@ const Contents = () => {
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen
                         ></iframe>
+                        <button
+                          onClick={() => {
+                            setCurrentExId(excercise.id);
+                            setShowYtUrlInput(true);
+                          }}
+                          className="bg-blue-600 text-xs p-2 rounded-sm text-white"
+                        >
+                          edit video
+                        </button>
                       </>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          setCurrentExId(excercise.id);
+                          setShowYtUrlInput(true);
+                        }}
+                        className="ml-2 mt-2 bg-blue-600 text-xs p-2 rounded-sm text-white"
+                      >
+                        upload video URL
+                      </button>
+                    )}
+                    {showYtUrlInput && (
+                      <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                        <form
+                          onSubmit={editYtLink}
+                          className="relative bg-white w-1/2 p-10 rounded shadow-md"
+                        >
+                          <div
+                            onClick={() => setShowYtUrlInput(false)}
+                            className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
+                          >
+                            <MdOutlineClose size={30} />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-sm font-semibold">
+                              Youtube URL
+                            </label>
+                            <input
+                              required
+                              type="text"
+                              placeholder="Youtube link ex:https://www.youtube.com/embed/44y7eGwLaqs"
+                              className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
+                              onChange={(el) => setYtEditLink(el.target.value)}
+                            />
+                            <button
+                              type="submit"
+                              className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
+                            >
+                              Submit
+                            </button>
+                          </div>
+                        </form>
+                      </div>
                     )}
                   </div>
                 );
