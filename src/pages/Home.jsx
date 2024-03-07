@@ -101,12 +101,20 @@ const Home = () => {
       <div className="max-w-7xl container mx-auto px-4 py-5">
         <div className="flex justify-between items-center mb-5">
           <h3 className="text-2xl font-semibold">Boards</h3>
-          <button
-            className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
-            onClick={() => setIsOpen(true)}
-          >
-            Create Board
-          </button>
+          <div className="flex gap-1">
+            <button
+              className="px-5 py-1.5 border border-blue-600 text-blue-600 rounded-sm"
+              onClick={() => navigate('/slides')}
+            >
+              Slides
+            </button>
+            <button
+              className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+              onClick={() => setIsOpen(true)}
+            >
+              Create Board
+            </button>
+          </div>
         </div>
         {/* ------- Error ---------- */}
         {error.length > 0 && !boards.length > 0 && (

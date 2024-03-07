@@ -100,4 +100,14 @@ export const deleteContent = (id) => {
   return apiClient.delete(`/contents/${id}`);
 };
 
+export const createCarousel = (payload) => {
+  return formDataApiClient.post('/carousels', payload);
+};
+export const getACarousel = (name) => {
+  return apiClient.get(`/carousels/${name}`);
+};
+export const removeACarousel = (id) => {
+  return apiClient.delete(`/carousels/${id}`);
+};
+
 export default apiClient;
