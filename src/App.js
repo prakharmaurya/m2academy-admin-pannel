@@ -13,6 +13,7 @@ import Lable from './pages/[board]/[classes]/[chapters]/label';
 import ChapterLabel from './pages/[board]/[classes]/[chapters]/label/chapterLabel';
 import Contents from './pages/[board]/[classes]/[chapters]/label/chapterLabel/contents';
 import Snackbar from './components/app/Snacker';
+import SlidesPage from './pages/Slides';
 
 export const Context = createContext();
 
@@ -44,6 +45,7 @@ function App() {
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/forgot_password" element={<ForgotPassword />} />
         <Route path="/" element={<Protected Component={Home} />} />
+        <Route path="/slides" element={<Protected Component={SlidesPage} />} />
         <Route path="/:id" element={<Protected Component={Board} />} />
         <Route path="/:id/:id" element={<Protected Component={Classes} />} />
         <Route
