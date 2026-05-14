@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { MdOutlineClose } from 'react-icons/md'
+import { MdOutlineClose, MdWarningAmber } from 'react-icons/md' // Warning icon add kiya
 import { BsTrash } from 'react-icons/bs'
 import { FaRegEdit } from 'react-icons/fa'
 
@@ -20,11 +20,16 @@ const Classes = () => {
   const { setIsShowSnack, setSnackDetail } = useContext(Context)
   const [loading, setLoading] = useState(false)
   const [isCreateSubjectOpen, setIsCreateSubjectOpen] = useState(false)
+
+  // Delete Modal States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [idToDelete, setIdToDelete] = useState(null)
+
   const [allSubjects, setAllSubjects] = useState([])
   const [inputSubjectName, setInputSubjectName] = useState('')
+  const [inputOrderNo, setInputOrderNo] = useState('')
   const [error, setError] = useState('')
 
-  // New state for managing the edit form for subjects
   const [editingSubject, setEditingSubject] = useState(null)
 
   const createSubject = async (event) => {
@@ -39,13 +44,15 @@ const Classes = () => {
     const data = {
       name: inputSubjectName,
       tag: 'subject',
-      category_id: params.id * 1, // Ensure category_id is a number
+      category_id: params.id * 1,
+      order_no: Number(inputOrderNo),
     }
     try {
       await createNewCategory(data)
       await fetchAllSubjects()
       setIsCreateSubjectOpen(false)
       setInputSubjectName('')
+      setInputOrderNo('')
       setIsShowSnack(true)
       setSnackDetail({ type: 'success', msg: 'Subject created successfully' })
     } catch (err) {
@@ -60,13 +67,20 @@ const Classes = () => {
     }
   }
 
-  const delSubject = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this subject?')) {
-      return
-    }
+  // 1. Delete Confirm Modal Open karne ka function
+  const openDeleteModal = (id) => {
+    setIdToDelete(id)
+    setIsDeleteModalOpen(true)
+  }
+
+  // 2. Actual Delete API call function
+  const handleConfirmDelete = async () => {
+    if (!idToDelete) return
+
     setLoading(true)
+    setIsDeleteModalOpen(false) // Modal turant close karein
     try {
-      await deleteACategory(id)
+      await deleteACategory(idToDelete)
       await fetchAllSubjects()
       setIsShowSnack(true)
       setSnackDetail({ type: 'success', msg: 'Subject deleted successfully' })
@@ -78,6 +92,7 @@ const Classes = () => {
       }
     } finally {
       setLoading(false)
+      setIdToDelete(null)
     }
   }
 
@@ -110,22 +125,18 @@ const Classes = () => {
     }
   }
 
-  // Function to open the EditForm modal for a subject
   const openEditSubjectForm = (subject) => {
     setEditingSubject(subject)
   }
 
-  // Function to close the EditForm modal
   const closeEditSubjectForm = () => {
     setEditingSubject(null)
   }
 
-  // Function to handle saving changes from EditForm for subjects
   const handleSaveEditSubject = async (id, newName) => {
     setLoading(true)
     try {
-      // API call to update the subject name
-      await editACategory(id, { name: newName, tag: 'subject' }) // Ensure tag is consistent
+      await editACategory(id, { name: newName, tag: 'subject' })
       closeEditSubjectForm()
       await fetchAllSubjects()
       setIsShowSnack(true)
@@ -157,7 +168,7 @@ const Classes = () => {
             Create Subject
           </button>
         </div>
-        {/* ------- Error ---------- */}
+
         {error.length > 0 && allSubjects.length === 0 && (
           <div className='h-96 flex justify-center items-center'>
             <div>
@@ -173,53 +184,48 @@ const Classes = () => {
             </div>
           </div>
         )}
-        {/* ------- All allSubjects list ------------ */}
+
         {allSubjects.length > 0 && (
           <div className='py-2 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5'>
-            {allSubjects.map((sub) => {
-              return (
-                <div
-                  key={sub.id}
-                  className='bg-blue-50 px-3 py-5 rounded-md border border-blue-300'
-                >
-                  <div className='flex justify-between items-center'>
-                    <h4 className='capitalize text-xl font-semibold'>
-                      {sub.name}
-                    </h4>
-                    {/* Grouping buttons for consistent alignment and adding edit button */}
-                    <div className='flex space-x-2'>
-                      <button
-                        className='text-blue-500 hover:rounded-full hover:bg-gray-300 p-2'
-                        onClick={() => openEditSubjectForm(sub)}
-                      >
-                        <FaRegEdit size={20} />
-                      </button>
-                      <button
-                        className='text-red-500 hover:rounded-full hover:bg-gray-300 p-2'
-                        onClick={() => delSubject(sub.id)}
-                      >
-                        <BsTrash size={20} />
-                      </button>
-                    </div>
+            {allSubjects.map((sub) => (
+              <div
+                key={sub.id}
+                className='bg-blue-50 px-3 py-5 rounded-md border border-blue-300'
+              >
+                <div className='flex justify-between items-center'>
+                  <h4 className='capitalize text-xl font-semibold'>
+                    {sub.name}
+                  </h4>
+                  <div className='flex space-x-2'>
+                    <button
+                      className='text-blue-500 hover:rounded-full hover:bg-gray-300 p-2'
+                      onClick={() => openEditSubjectForm(sub)}
+                    >
+                      <FaRegEdit size={20} />
+                    </button>
+                    <button
+                      className='text-red-500 hover:rounded-full hover:bg-gray-300 p-2'
+                      onClick={() => openDeleteModal(sub.id)} // Browser confirm ki jagah modal open hoga
+                    >
+                      <BsTrash size={20} />
+                    </button>
                   </div>
-                  <div className='my-2 border-b border-b-gray-600/50 opacity-30'></div>
-                  <button
-                    className='mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black'
-                    onClick={() => navigate(`${sub.id}`)}
-                  >
-                    Chapters
-                  </button>
                 </div>
-              )
-            })}
+                <div className='my-2 border-b border-b-gray-600/50 opacity-30'></div>
+                <button
+                  className='mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black'
+                  onClick={() => navigate(`${sub.id}`)}
+                >
+                  Chapters
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
         {/* ------------ Create New Subject Pop up ------------------ */}
         {isCreateSubjectOpen && (
-          <div
-            className={`fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center p-4`}
-          >
+          <div className='fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center p-4'>
             <div className='relative -mt-5 md:-mt-20 w-11/12 md:w-1/2 lg:w-1/3 shadow rounded-sm bg-white border'>
               <div
                 className='absolute top-2 right-2 cursor-pointer'
@@ -227,45 +233,88 @@ const Classes = () => {
               >
                 <MdOutlineClose size={25} />
               </div>
-              <div className=' flex justify-center'>
-                <div className='px-3 py-8 w-full'>
-                  <p className='text-center text-xl text-blue-500 font-semibold'>
-                    Create Subject
-                  </p>
-                  <form
-                    onSubmit={createSubject}
-                    className='py-10 flex flex-col gap-5'
+              <div className='px-3 py-8 w-full'>
+                <p className='text-center text-xl text-blue-500 font-semibold'>
+                  Create Subject
+                </p>
+                <form
+                  onSubmit={createSubject}
+                  className='py-10 flex flex-col gap-5'
+                >
+                  <div className='flex flex-col gap-1'>
+                    <label className='text-sm'>Subject Name</label>
+                    <input
+                      required
+                      type='text'
+                      placeholder='Enter Your Subject Name'
+                      className='p-3 rounded-sm bg-gray-200 border-none focus:outline focus:outline-blue-300'
+                      onChange={(e) => setInputSubjectName(e.target.value)}
+                      value={inputSubjectName}
+                    />
+                  </div>
+                  <div className='flex flex-col gap-1'>
+                    <label className='text-sm'>Order No</label>
+                    <input
+                      required
+                      type='number'
+                      placeholder='Enter Order Number (e.g. 1)'
+                      className='p-3 rounded-sm bg-gray-200 border-none focus:outline focus:outline-blue-300'
+                      onChange={(e) => setInputOrderNo(e.target.value)}
+                      value={inputOrderNo}
+                    />
+                  </div>
+                  <div className='flex justify-center'>
+                    <button
+                      type='submit'
+                      className='px-6 py-1.5 text-white bg-blue-500 rounded-sm'
+                    >
+                      Create Subject
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ------------ Delete Confirmation Pop up (NEW) ------------------ */}
+        {isDeleteModalOpen && (
+          <div className='fixed z-40 bg-black/60 inset-0 h-screen flex justify-center items-center p-4'>
+            <div className='relative w-11/12 md:w-[400px] shadow-lg rounded-md bg-white p-6 border transition-all transform scale-100'>
+              <div className='flex flex-col items-center text-center'>
+                <div className='bg-red-100 p-3 rounded-full mb-4'>
+                  <MdWarningAmber size={40} className='text-red-600' />
+                </div>
+                <h3 className='text-xl font-bold text-gray-800'>
+                  Delete Subject?
+                </h3>
+                <p className='text-gray-500 mt-2'>
+                  Are you sure you want to delete this subject? This action
+                  cannot be undone.
+                </p>
+
+                <div className='flex gap-3 mt-8 w-full'>
+                  <button
+                    className='flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-sm hover:bg-gray-300 font-medium'
+                    onClick={() => setIsDeleteModalOpen(false)}
                   >
-                    <div className='flex flex-col gap-1'>
-                      <label className='text-sm'>Subject Name</label>
-                      <input
-                        required
-                        type='text'
-                        placeholder='Enter Your Subject Name'
-                        className='p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300'
-                        onChange={(e) => setInputSubjectName(e.target.value)}
-                        value={inputSubjectName}
-                      />
-                    </div>
-                    <div className='flex justify-center'>
-                      <button
-                        type='submit'
-                        className='px-6 py-1.5 text-white bg-blue-500 rounded-sm'
-                      >
-                        Create Subject
-                      </button>
-                    </div>
-                  </form>
+                    Cancel
+                  </button>
+                  <button
+                    className='flex-1 px-4 py-2 bg-red-600 text-white rounded-sm hover:bg-red-700 font-medium transition-colors'
+                    onClick={handleConfirmDelete}
+                  >
+                    Yes, Delete
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Conditionally render the EditForm when editingSubject is not null */}
         {editingSubject && (
           <EditForm
-            board={editingSubject} // The EditForm uses 'board' prop internally, but we pass 'editingSubject'
+            board={editingSubject}
             onClose={closeEditSubjectForm}
             onSave={handleSaveEditSubject}
           />
