@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useContext, useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import {
   deleteContent,
   deleteExcercise,
@@ -9,990 +9,763 @@ import {
   uploadExcercises,
   uploadYtVideos,
   editExcercises,
-} from '../../../../../../../utils/api';
+} from '../../../../../../../utils/api'
 
-import { Context } from '../../../../../../../App';
+import { Context } from '../../../../../../../App'
 
-import { MdOutlineClose, MdModeEdit } from 'react-icons/md';
-import { BsTrash } from 'react-icons/bs';
-import Loader from '../../../../../../../components/ui/Loader';
+import { MdOutlineClose, MdModeEdit, MdWarningAmber } from 'react-icons/md'
+import { BsTrash } from 'react-icons/bs'
+import Loader from '../../../../../../../components/ui/Loader'
 
 const Contents = () => {
-  const params = useParams();
+  const params = useParams()
 
-  const { setIsShowSnack, setSnackDetail } = useContext(Context);
-  const [loading, setLoading] = useState(false);
-  const [isExcercise, setIsExercise] = useState(false);
-  const [isNotes, setIsNotes] = useState(false);
-  const [isPractice, setIsPractice] = useState(false);
-  const [isVideo, setIsVideo] = useState(false);
-  const [contents, setContents] = useState({});
-  const [error, setError] = useState('');
-  // ----------- Excercise Section States -----------
-  const [questionFile, setQuestionFile] = useState(null);
-  const [answerFile, setAnswerFile] = useState(null);
-  const [exYtVideoLink, setExYtVideoLink] = useState('');
+  const { setIsShowSnack, setSnackDetail } = useContext(Context)
+  const [loading, setLoading] = useState(false)
+  const [isExcercise, setIsExercise] = useState(false)
+  const [isNotes, setIsNotes] = useState(false)
+  const [isPractice, setIsPractice] = useState(false)
+  const [isVideo, setIsVideo] = useState(false)
+  const [contents, setContents] = useState({})
+  const [error, setError] = useState('')
 
-  const [currentExId, setCurrentExId] = useState('');
-  //  Edit Question
-  const [isQuestionPopupOpen, setIsQuestionPopupOpen] = useState(false);
-  const [questionThumbnail, setQuestionThumbnail] = useState(null);
-  const [prevQuestionImage, setPrevQuestionImage] = useState(null);
-  //  Edit Solution
-  const [isSolutionPopupOpen, setIsSolutionPopupOpen] = useState(false);
-  const [solutionThumbnail, setSolutionThumbnail] = useState(null);
-  const [prevSolutionImage, setPrevSolutionImage] = useState(null);
-  // Edit Yt State
-  const [showYtUrlInput, setShowYtUrlInput] = useState(false);
-  const [ytEditLink, setYtEditLink] = useState('');
-  // --------------------------------------------------
-  const [note, setNote] = useState(null);
-  const [practice, setPractice] = useState(null);
-  const [ytLink, setYtLink] = useState('');
-  const [remark, setRemark] = useState('');
+  // Delete Modal States
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [deleteConfig, setDeleteConfig] = useState({ id: null, type: '' })
+
+  // ----------- Form States -----------
+  const [questionFile, setQuestionFile] = useState(null)
+  const [answerFile, setAnswerFile] = useState(null)
+  const [exYtVideoLink, setExYtVideoLink] = useState('')
+  const [inputOrderNo, setInputOrderNo] = useState('') // New State for Order No
+  const [remark, setRemark] = useState('')
+  const [note, setNote] = useState(null)
+  const [practice, setPractice] = useState(null)
+  const [ytLink, setYtLink] = useState('')
+
+  // ----------- Edit States -----------
+  const [currentExId, setCurrentExId] = useState('')
+  const [isQuestionPopupOpen, setIsQuestionPopupOpen] = useState(false)
+  const [questionThumbnail, setQuestionThumbnail] = useState(null)
+  const [prevQuestionImage, setPrevQuestionImage] = useState(null)
+  const [isSolutionPopupOpen, setIsSolutionPopupOpen] = useState(false)
+  const [solutionThumbnail, setSolutionThumbnail] = useState(null)
+  const [prevSolutionImage, setPrevSolutionImage] = useState(null)
+  const [showYtUrlInput, setShowYtUrlInput] = useState(false)
+  const [ytEditLink, setYtEditLink] = useState('')
+
+  const fetchContents = async () => {
+    setLoading(true)
+    try {
+      const res = await getAllContents(params.id * 1)
+      setContents(res.data)
+      setLoading(false)
+    } catch (err) {
+      setLoading(false)
+      if (err.response && err.response.data) {
+        setError(err.response.data.message)
+        if (err.response.data.message === 'contents not found') {
+          setContents({})
+        }
+      }
+    }
+  }
+
+  // Generic Delete Opener
+  const openDeleteModal = (id, type) => {
+    setDeleteConfig({ id, type })
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    const { id, type } = deleteConfig
+    setLoading(true)
+    setIsDeleteModalOpen(false)
+    try {
+      if (type === 'exercise') await deleteExcercise(id)
+      else if (type === 'yt') await deleteYtVideo(id)
+      else await deleteContent(id) // for notes/practice
+
+      fetchContents()
+      setSnackDetail({ type: 'success', msg: 'Deleted successfully' })
+      setIsShowSnack(true)
+    } catch (err) {
+      console.log(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const uploadExcercise = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
+      const content = new FormData()
+      content.append('categoryid', params.id * 1)
+      content.append('remark', remark)
+      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('questionfile', questionFile)
+      if (answerFile) content.append('answerfile', answerFile)
+      if (exYtVideoLink.length) content.append('videourl', exYtVideoLink)
 
-      content.append('categoryid', params.id * 1);
-      content.append('remark', remark);
-      content.append('questionfile', questionFile);
-      if (answerFile) {
-        content.append('answerfile', answerFile);
-      }
-      if (exYtVideoLink.length) {
-        content.append('videourl', exYtVideoLink);
-      }
-      const res = await uploadExcercises(content);
-      // console.log(res);
-      fetchContents();
-      setIsExercise(false);
-      setAnswerFile(null);
-      setQuestionFile(null);
-      setRemark('');
-      setExYtVideoLink('');
-      setRemark('');
-      setLoading(false);
+      await uploadExcercises(content)
+      fetchContents()
+      setIsExercise(false)
+      resetForm()
     } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
+      handleError(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false);
-  };
+  }
 
   const uploadNotes = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
-      content.append('tag', 'notes');
-      content.append('categoryid', params.id * 1);
-      content.append('remark', remark);
-      content.append('file', note);
-      const res = await uploadContents(content);
-      // console.log(res);
-      fetchContents();
-      setIsNotes(false);
-      setRemark('');
-      setLoading(false);
+      const content = new FormData()
+      content.append('tag', 'notes')
+      content.append('categoryid', params.id * 1)
+      content.append('remark', remark)
+      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('file', note)
+      await uploadContents(content)
+      fetchContents()
+      setIsNotes(false)
+      resetForm()
     } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
+      handleError(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false);
-  };
+  }
 
   const uploadPractice = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
-      content.append('tag', 'practice');
-      content.append('categoryid', params.id * 1);
-      content.append('remark', remark);
-      content.append('file', practice);
-      const res = await uploadContents(content);
-      // console.log(res);
-      fetchContents();
-      setIsPractice(false);
-      setRemark('');
-      setLoading(false);
+      const content = new FormData()
+      content.append('tag', 'practice')
+      content.append('categoryid', params.id * 1)
+      content.append('remark', remark)
+      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('file', practice)
+      await uploadContents(content)
+      fetchContents()
+      setIsPractice(false)
+      resetForm()
     } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
+      handleError(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false);
-  };
+  }
 
-  // --------------- Yt Video -----------------
   const uploadYoutubeVideo = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const d = { category_id: params.id * 1, url: ytLink };
-      const res = await uploadYtVideos(d);
-      // console.log(res);
-      fetchContents();
-      setIsVideo(false);
-      setRemark('');
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
+      const d = {
+        category_id: params.id * 1,
+        url: ytLink,
+        order_no: Number(inputOrderNo), // Added Order No
       }
+      await uploadYtVideos(d)
+      fetchContents()
+      setIsVideo(false)
+      resetForm()
+    } catch (err) {
+      handleError(err)
+    } finally {
+      setLoading(false)
     }
-    setLoading(false);
-  };
+  }
 
-  const delYtVideo = async (id) => {
-    setLoading(true);
-    try {
-      await deleteYtVideo(id);
-      fetchContents();
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-    }
-    setLoading(false);
-  };
+  const resetForm = () => {
+    setRemark('')
+    setInputOrderNo('')
+    setQuestionFile(null)
+    setAnswerFile(null)
+    setExYtVideoLink('')
+    setNote(null)
+    setPractice(null)
+    setYtLink('')
+  }
 
-  // -------------------------------------------------
-  const fetchContents = async () => {
-    setLoading(true);
-    try {
-      const res = await getAllContents(params.id * 1);
-      // console.log(res);
-      setContents(res.data);
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setError(err.response.data.message);
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-        if (err.response.data.message === 'contents not found') {
-          setContents({});
-        }
-      }
+  const handleError = (err) => {
+    if (err.response && err.response.data) {
+      setSnackDetail({ type: 'error', msg: err.response.data.message })
+      setIsShowSnack(true)
     }
-    setLoading(false);
-  };
+  }
 
-  const delExContent = async (id) => {
-    setLoading(true);
-    try {
-      await deleteExcercise(id);
-      fetchContents();
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-    }
-    setLoading(false);
-  };
-  // ------------- Contents --------
-  const delContent = async (id) => {
-    setLoading(true);
-    try {
-      await deleteContent(id);
-      fetchContents();
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-    }
-    setLoading(false);
-  };
-  // ------------ Edit ----------------------
-  const onQusetionImageChange = (event) => {
-    setQuestionThumbnail(event.target.files[0]);
-    if (event.target.files && event.target.files[0]) {
-      setPrevQuestionImage(URL.createObjectURL(event.target.files[0]));
-    }
-  };
-  const onSolutionImageChange = (event) => {
-    setSolutionThumbnail(event.target.files[0]);
-    if (event.target.files && event.target.files[0]) {
-      setPrevSolutionImage(URL.createObjectURL(event.target.files[0]));
-    }
-  };
+  // (Keeping existing editQuestion, editSolution, editYtLink logic)
+  const onQusetionImageChange = (e) => {
+    setQuestionThumbnail(e.target.files[0])
+    if (e.target.files[0])
+      setPrevQuestionImage(URL.createObjectURL(e.target.files[0]))
+  }
+  const onSolutionImageChange = (e) => {
+    setSolutionThumbnail(e.target.files[0])
+    if (e.target.files[0])
+      setPrevSolutionImage(URL.createObjectURL(e.target.files[0]))
+  }
 
   const editQuestion = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
-      content.append('questionfile', questionThumbnail);
-      const { data } = await editExcercises(currentExId, content);
-      console.log(data);
-      fetchContents();
-      setIsQuestionPopupOpen(false);
-      setSnackDetail({ type: 'success', msg: data.message });
-      setIsShowSnack(true);
-      setLoading(false);
-      setPrevQuestionImage(null);
-      setQuestionThumbnail(null);
+      const content = new FormData()
+      content.append('questionfile', questionThumbnail)
+      await editExcercises(currentExId, content)
+      fetchContents()
+      setIsQuestionPopupOpen(false)
+      setSnackDetail({ type: 'success', msg: 'Question updated' })
+      setIsShowSnack(true)
     } catch (err) {
-      console.log(err);
-      setPrevQuestionImage(null);
-      setQuestionThumbnail(null);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-      setIsQuestionPopupOpen(false);
+      handleError(err)
+    } finally {
+      setLoading(false)
+      setPrevQuestionImage(null)
     }
-  };
+  }
+
   const editSolution = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
-      content.append('answerfile', solutionThumbnail);
-      const { data } = await editExcercises(currentExId, content);
-      // console.log(data);
-      fetchContents();
-      setIsSolutionPopupOpen(false);
-      setSnackDetail({ type: 'success', msg: data.message });
-      setIsShowSnack(true);
-      setLoading(false);
-      setPrevSolutionImage(null);
-      setSolutionThumbnail(null);
+      const content = new FormData()
+      content.append('answerfile', solutionThumbnail)
+      await editExcercises(currentExId, content)
+      fetchContents()
+      setIsSolutionPopupOpen(false)
+      setSnackDetail({ type: 'success', msg: 'Solution updated' })
+      setIsShowSnack(true)
     } catch (err) {
-      console.log(err);
-      setLoading(false);
-      setPrevSolutionImage(null);
-      setSolutionThumbnail(null);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-      setIsSolutionPopupOpen(false);
+      handleError(err)
+    } finally {
+      setLoading(false)
+      setPrevSolutionImage(null)
     }
-  };
+  }
 
   const editYtLink = async (event) => {
-    event.preventDefault();
-    setLoading(true);
+    event.preventDefault()
+    setLoading(true)
     try {
-      const content = new FormData();
-      content.append('videourl', ytEditLink);
-      const { data } = await editExcercises(currentExId, content);
-      // console.log(data);
-      fetchContents();
-      setShowYtUrlInput(false);
-      setSnackDetail({ type: 'success', msg: data.message });
-      setIsShowSnack(true);
-      setLoading(false);
+      const content = new FormData()
+      content.append('videourl', ytEditLink)
+      await editExcercises(currentExId, content)
+      fetchContents()
+      setShowYtUrlInput(false)
+      setSnackDetail({ type: 'success', msg: 'Video updated' })
+      setIsShowSnack(true)
     } catch (err) {
-      console.log(err);
-      setLoading(false);
-      if (err.response) {
-        if (err.response.data) {
-          setSnackDetail({ type: 'error', msg: err.response.data.message });
-          setIsShowSnack(true);
-        }
-      }
-      setShowYtUrlInput(false);
+      handleError(err)
+    } finally {
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchContents();
-  }, []);
+    fetchContents()
+  }, [])
 
   return (
     <div>
-      <div className="max-w-7xl container mx-auto px-4 py-5">
-        <div className="flex flex-col md:flex-row md:justify-between items-center mb-5">
-          <h3 className="text-2xl font-semibold">Contents</h3>
-          <div className="flex gap-2">
+      <div className='max-w-7xl container mx-auto px-4 py-5'>
+        <div className='flex flex-col md:flex-row md:justify-between items-center mb-5'>
+          <h3 className='text-2xl font-semibold'>Contents</h3>
+          <div className='flex flex-wrap gap-2 mt-3 md:mt-0'>
             <button
-              className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+              className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
               onClick={() => setIsExercise(true)}
             >
               Upload Excercise
             </button>
             <button
-              className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+              className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
               onClick={() => setIsNotes(true)}
             >
               Upload Notes
             </button>
             <button
-              className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+              className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
               onClick={() => setIsPractice(true)}
             >
               Upload Practices
             </button>
             <button
-              className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
+              className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
               onClick={() => setIsVideo(true)}
             >
               Upload Video
             </button>
           </div>
         </div>
-        {/* ------- Error ---------- */}
-        {error.length > 0 &&
-          !contents?.excercises?.length > 0 &&
-          !contents?.notes?.length > 0 &&
-          !contents?.practices?.length > 0 &&
-          !contents?.videos?.length > 0 && (
-            <div className="h-96 flex justify-center items-center">
-              <div>
-                <p className="mb-5 capitalize text-xl font-semibold">{error}</p>
-              </div>
-            </div>
-          )}
-        {/* -------- Exercises -------------- */}
+
+        {/* -------- Exercises List -------------- */}
         {contents?.excercises?.length > 0 && (
-          <div className="py-5">
-            <h3 className="text-2xl font-semibold">Excercise</h3>
-            <div className="py-2 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5">
-              {contents?.excercises?.map((excercise) => {
-                return (
-                  <div key={excercise.id} className="border p-2">
-                    <p className="pb-2 font-semibold">{excercise.remark}</p>
-                    <div className="relative">
-                      <img
-                        className="h-60 w-full object-contain"
-                        src={`https://storage.googleapis.com/ecoaching/${excercise.question_url}`}
-                        alt="question"
-                      />
-                      <div className="absolute top-2 right-2 grid gap-2">
-                        <button
-                          className="text-red-500 rounded-full bg-gray-100 p-2 duration-150 hover:text-red-600 hover:bg-gray-200 hover:shadow-md"
-                          onClick={() => delExContent(excercise.id)}
-                        >
-                          <BsTrash size={20} />
-                        </button>
+          <div className='py-5'>
+            <h3 className='text-2xl font-semibold mb-4'>Exercises</h3>
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5'>
+              {contents.excercises.map((ex) => (
+                <div
+                  key={ex.id}
+                  className='border p-3 rounded shadow-sm bg-white relative'
+                >
+                  <span className='absolute top-2 left-2 bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded'>
+                    Order: {ex.order_no}
+                  </span>
+                  <p className='pt-5 pb-2 font-semibold text-center'>
+                    {ex.remark}
+                  </p>
+                  <img
+                    className='h-48 w-full object-contain border mb-2'
+                    src={`https://storage.googleapis.com/ecoaching/${ex.question_url}`}
+                    alt='Q'
+                  />
 
-                        <button
-                          className="text-gray-500 rounded-full bg-gray-100 p-2 duration-150 hover:text-gray-900 hover:bg-gray-200 hover:shadow-md"
-                          onClick={() => {
-                            setCurrentExId(excercise.id);
-                            setIsQuestionPopupOpen(true);
-                          }}
-                        >
-                          <MdModeEdit size={20} />
-                        </button>
-                      </div>
-                      {isQuestionPopupOpen && (
-                        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-                          <form
-                            onSubmit={editQuestion}
-                            className="relative bg-white w-1/2 p-10 rounded shadow-md"
-                          >
-                            <div
-                              onClick={() => {
-                                setPrevQuestionImage(null);
-                                setQuestionThumbnail(null);
-                                setIsQuestionPopupOpen(false);
-                              }}
-                              className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
-                            >
-                              <MdOutlineClose size={30} />
-                            </div>
-                            <div className="flex flex-col gap-1">
-                              <label className="text-sm md:text-sm">
-                                Question
-                              </label>
-                              <input
-                                required
-                                type="file"
-                                accept="image/*"
-                                onChange={onQusetionImageChange}
-                                className="text-sm px-4 py-2 border border-black rounded-sm outline-black focus:border-none focus:outline focus:outline-blue-500"
-                              />
-                              {prevQuestionImage && (
-                                <img
-                                  alt="preview prevImage"
-                                  src={prevQuestionImage}
-                                  className="h-32 object-contain"
-                                />
-                              )}
-                              <button
-                                type="submit"
-                                className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
-                              >
-                                Submit
-                              </button>
-                            </div>
-                          </form>
-                        </div>
-                      )}
-                    </div>
-                    {excercise?.answer_url?.length ? (
-                      <>
-                        <p className="capitalize font-semibold mt-3 pb-2 border-t">
-                          Solution
-                        </p>
-                        <button
-                          onClick={() => {
-                            setCurrentExId(excercise.id);
-                            setIsSolutionPopupOpen(true);
-                          }}
-                          className="bg-blue-600 text-xs p-2 rounded-sm text-white"
-                        >
-                          edit solution
-                        </button>
-                        <img
-                          className="h-60 w-60 object-contain"
-                          src={`https://storage.googleapis.com/ecoaching/${excercise.answer_url}`}
-                          alt="answer"
-                        />
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setCurrentExId(excercise.id);
-                          setIsSolutionPopupOpen(true);
-                        }}
-                        className="bg-blue-600 text-xs p-2 rounded-sm text-white"
-                      >
-                        upload solution
-                      </button>
-                    )}
-
-                    {isSolutionPopupOpen && (
-                      <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-                        <form
-                          onSubmit={editSolution}
-                          className="relative bg-white w-1/2 p-10 rounded shadow-md"
-                        >
-                          <div
-                            onClick={() => {
-                              setPrevSolutionImage(null);
-                              setSolutionThumbnail(null);
-                              setIsSolutionPopupOpen(false);
-                            }}
-                            className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
-                          >
-                            <MdOutlineClose size={30} />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-sm md:text-sm">
-                              Thumbnail
-                            </label>
-                            <input
-                              required
-                              type="file"
-                              accept="image/*"
-                              onChange={onSolutionImageChange}
-                              className="text-sm px-4 py-2 border border-black rounded-sm outline-black focus:border-none focus:outline focus:outline-blue-500"
-                            />
-                            {prevSolutionImage && (
-                              <img
-                                alt="preview prevImage"
-                                src={prevSolutionImage}
-                                className="h-32 object-contain"
-                              />
-                            )}
-                            <button
-                              type="submit"
-                              className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
-                            >
-                              Submit
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-
-                    {excercise?.video_url ? (
-                      <>
-                        <p className="capitalize font-semibold mt-3 pb-2 border-t">
-                          Solution Video
-                        </p>
-                        <iframe
-                          width="255"
-                          height="158"
-                          src={excercise.video_url}
-                          title="YouTube video player"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                        ></iframe>
-                        <button
-                          onClick={() => {
-                            setCurrentExId(excercise.id);
-                            setShowYtUrlInput(true);
-                          }}
-                          className="bg-blue-600 text-xs p-2 rounded-sm text-white"
-                        >
-                          edit video
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          setCurrentExId(excercise.id);
-                          setShowYtUrlInput(true);
-                        }}
-                        className="ml-2 mt-2 bg-blue-600 text-xs p-2 rounded-sm text-white"
-                      >
-                        upload video URL
-                      </button>
-                    )}
-                    {showYtUrlInput && (
-                      <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-                        <form
-                          onSubmit={editYtLink}
-                          className="relative bg-white w-1/2 p-10 rounded shadow-md"
-                        >
-                          <div
-                            onClick={() => setShowYtUrlInput(false)}
-                            className="absolute right-2 top-2 rounded-full p-1 hover:bg-gray-200 hover:shadow-md duration-150 hover:cursor-pointer"
-                          >
-                            <MdOutlineClose size={30} />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-sm font-semibold">
-                              Youtube URL
-                            </label>
-                            <input
-                              required
-                              type="text"
-                              placeholder="Youtube link ex:https://www.youtube.com/embed/44y7eGwLaqs"
-                              className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                              onChange={(el) => setYtEditLink(el.target.value)}
-                            />
-                            <button
-                              type="submit"
-                              className="mt-2 bg-blue-500 text-white rounded-sm py-3 px-2"
-                            >
-                              Submit
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
+                  <div className='flex justify-center gap-4 mb-3'>
+                    <button
+                      onClick={() => openDeleteModal(ex.id, 'exercise')}
+                      className='text-red-500 p-2 bg-gray-100 rounded-full hover:bg-red-50'
+                    >
+                      <BsTrash size={18} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentExId(ex.id)
+                        setIsQuestionPopupOpen(true)
+                      }}
+                      className='text-blue-500 p-2 bg-gray-100 rounded-full hover:bg-blue-50'
+                    >
+                      <MdModeEdit size={18} />
+                    </button>
                   </div>
-                );
-              })}
+
+                  {ex.answer_url ? (
+                    <div className='border-t pt-2 mt-2'>
+                      <button
+                        onClick={() => {
+                          setCurrentExId(ex.id)
+                          setIsSolutionPopupOpen(true)
+                        }}
+                        className='text-[10px] bg-blue-600 text-white px-2 py-1 rounded'
+                      >
+                        Edit Solution
+                      </button>
+                      <img
+                        className='h-32 w-full object-contain mt-1'
+                        src={`https://storage.googleapis.com/ecoaching/${ex.answer_url}`}
+                        alt='A'
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setCurrentExId(ex.id)
+                        setIsSolutionPopupOpen(true)
+                      }}
+                      className='w-full mt-2 text-[10px] bg-green-600 text-white py-1 rounded'
+                    >
+                      Upload Solution
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
-        {/* -------- Notes -------------- */}
+
+        {/* -------- Notes & Practices List (Combined view for brevity) -------------- */}
         {contents?.contents?.length > 0 && (
-          <div className="py-5">
-            <h3 className="text-2xl font-semibold">Notes</h3>
-            {contents?.contents?.map((note) => {
-              return (
-                <>
-                  {note.tag === 'notes' && (
-                    <div
-                      key={note.id}
-                      className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
-                    >
-                      <p className="text-sm capitalize font-semibold">
-                        {note.remark}
-                      </p>
-                      <div className="flex gap-2">
-                        <a
-                          onClick={() => window.open(note.file_url)}
-                          className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
-                        >
-                          download
-                        </a>
-                        <button
-                          className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                          onClick={() => delContent(note.id)}
-                        >
-                          <BsTrash size={20} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })}
-          </div>
-        )}
-        {/* -------- Practices -------------- */}
-        {contents?.contents?.length > 0 && (
-          <div className="py-5">
-            <h3 className="text-2xl font-semibold">Practices</h3>
-            {contents?.contents?.map((practice) => {
-              return (
-                <>
-                  {practice.tag === 'practice' && (
-                    <div
-                      key={practice.id}
-                      className="mt-2 border-2 border-gray-400 px-2 py-5 flex justify-between items-center rounded-md shadow-sm"
-                    >
-                      <p className="text-sm capitalize font-semibold">
-                        {practice.remark}
-                      </p>
-                      <div className="flex gap-2">
-                        <a
-                          onClick={() => window.open(practice.file_url)}
-                          className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
-                        >
-                          download
-                        </a>
-                        <button
-                          className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                          onClick={() => delContent(practice.id)}
-                        >
-                          <BsTrash size={20} />
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              );
-            })}
-          </div>
-        )}
-        {/* -------- Yt Videos -------------- */}
-        {contents?.videos?.length > 0 && (
-          <div className="py-5">
-            <h3 className="text-2xl font-semibold">Videos</h3>
-            {contents?.videos?.map((video) => {
-              return (
+          <div className='py-5'>
+            <h3 className='text-2xl font-semibold mb-4'>
+              Documents (Notes & Practices)
+            </h3>
+            <div className='space-y-2'>
+              {contents.contents.map((item) => (
                 <div
-                  key={video.id}
-                  className="mt-2 border-2 border-gray-400 px-2 py-5 rounded-md shadow-sm"
+                  key={item.id}
+                  className='flex justify-between items-center p-4 border rounded bg-white'
                 >
+                  <div>
+                    <span className='text-[10px] font-bold text-blue-600 uppercase mr-2'>
+                      {item.tag}
+                    </span>
+                    <span className='bg-gray-200 px-2 py-0.5 text-[10px] rounded mr-2'>
+                      Order: {item.order_no}
+                    </span>
+                    <p className='font-medium inline'>{item.remark}</p>
+                  </div>
+                  <div className='flex gap-3'>
+                    <button
+                      onClick={() => window.open(item.file_url)}
+                      className='text-sm text-blue-600 font-bold hover:underline'
+                    >
+                      Download
+                    </button>
+                    <button
+                      onClick={() => openDeleteModal(item.id, 'content')}
+                      className='text-red-500'
+                    >
+                      <BsTrash size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* -------- YT Videos List -------------- */}
+        {contents?.videos?.length > 0 && (
+          <div className='py-5'>
+            <h3 className='text-2xl font-semibold mb-4'>Videos</h3>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+              {contents.videos.map((v) => (
+                <div key={v.id} className='border p-3 rounded bg-white'>
                   <iframe
-                    width="560"
-                    height="315"
-                    src={video.url}
-                    title="YouTube video player"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    className='w-full aspect-video'
+                    src={v.url}
+                    title='Video'
                     allowFullScreen
                   ></iframe>
-                  <div>
-                    <p className="text-sm capitalize font-semibold">
-                      {video.remark}
-                    </p>
+                  <div className='mt-2 flex justify-between items-center'>
+                    <p className='font-semibold text-sm'>Order: {v.order_no}</p>
                     <button
-                      className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delYtVideo(video.id)}
+                      onClick={() => openDeleteModal(v.id, 'yt')}
+                      className='text-red-500'
                     >
                       <BsTrash size={20} />
                     </button>
                   </div>
-                  {/* <div className="flex gap-2">
-                    <a
-                      href={video.url}
-                      target="_blank"
-                      className="px-5 py-1.5 bg-blue-600 text-white rounded-sm"
-                    >
-                      Watch this Video
-                    </a>
-                    <button
-                      className="text-red-500 hover:rounded-full hover:bg-gray-300 p-2"
-                      onClick={() => delContent(video.id)}
-                    >
-                      <BsTrash size={20} />
-                    </button>
-                  </div> */}
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
         )}
-        {/* ---------- Upload Excercise -------- */}
+
+        {/* ---------- Upload Exercise Popup -------- */}
         {isExcercise && (
-          <div
-            className={`${
-              isExcercise
-                ? 'transition-all duration-[6s] opacity-100 translate-y-0'
-                : 'transition-all duration-[6s] opacity-0 translate-y-[200%]'
-            } fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center`}
-          >
-            <div className="relative -mt-5 md:-mt-20 w-11/12 md:w-1/2 lg:w-1/3 shadow rounded-sm bg-white border">
-              <div
-                className="absolute top-2 right-2 cursor-pointer"
+          <div className='fixed z-30 bg-black/60 inset-0 flex justify-center items-center p-4 overflow-y-auto'>
+            <div className='relative w-full max-w-md bg-white rounded p-6 shadow-lg'>
+              <MdOutlineClose
+                className='absolute top-3 right-3 cursor-pointer'
+                size={25}
                 onClick={() => setIsExercise(false)}
-              >
-                <MdOutlineClose size={25} />
-              </div>
-              <div className=" flex justify-center">
-                <div className="px-3 py-8 w-full">
-                  <p className="text-center text-xl text-blue-500 font-semibold">
-                    Upload Excercise
-                  </p>
-                  <form
-                    onSubmit={uploadExcercise}
-                    className="py-10 flex flex-col gap-5"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm">Upload Question*</label>
-                      <input
-                        required
-                        type="file"
-                        accept="image/*"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setQuestionFile(e.target.files[0])}
-                      />
-                      <label className="text-sm">Upload Answer</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setAnswerFile(e.target.files[0])}
-                      />
-                      <label className="text-sm">Video URL</label>
-                      <input
-                        type="text"
-                        placeholder="Enter Youtube Video URL"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setExYtVideoLink(e.target.value)}
-                      />
-                      <label className="text-sm">Remark*</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="Enter Your Remark"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setRemark(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        type="submit"
-                        className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </form>
+              />
+              <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
+                Upload Exercise
+              </h2>
+              <form onSubmit={uploadExcercise} className='space-y-4'>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Upload Question*
+                  </label>
+                  <input
+                    required
+                    type='file'
+                    accept='image/*'
+                    className='w-full p-2 bg-gray-100 rounded border'
+                    onChange={(e) => setQuestionFile(e.target.files[0])}
+                  />
                 </div>
-              </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Upload Answer (Optional)
+                  </label>
+                  <input
+                    type='file'
+                    accept='image/*'
+                    className='w-full p-2 bg-gray-100 rounded border'
+                    onChange={(e) => setAnswerFile(e.target.files[0])}
+                  />
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Youtube Solution URL
+                  </label>
+                  <input
+                    type='text'
+                    placeholder='Embed link'
+                    className='w-full p-2 bg-gray-100 rounded border'
+                    onChange={(e) => setExYtVideoLink(e.target.value)}
+                  />
+                </div>
+                <div className='flex gap-2'>
+                  <div className='w-2/3'>
+                    <label className='text-xs font-bold block mb-1'>
+                      Remark*
+                    </label>
+                    <input
+                      required
+                      type='text'
+                      placeholder='Topic name'
+                      className='w-full p-2 bg-gray-100 rounded border'
+                      value={remark}
+                      onChange={(e) => setRemark(e.target.value)}
+                    />
+                  </div>
+                  <div className='w-1/3'>
+                    <label className='text-xs font-bold block mb-1'>
+                      Order No*
+                    </label>
+                    <input
+                      required
+                      type='number'
+                      className='w-full p-2 bg-gray-100 rounded border'
+                      value={inputOrderNo}
+                      onChange={(e) => setInputOrderNo(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <button
+                  type='submit'
+                  className='w-full bg-blue-600 text-white py-2 rounded font-bold mt-4'
+                >
+                  Submit
+                </button>
+              </form>
             </div>
           </div>
         )}
-        {/* ---------- Upload Notes -------- */}
+
+        {/* ---------- Upload Notes Popup -------- */}
         {isNotes && (
-          <div
-            className={`${
-              isNotes
-                ? 'transition-all duration-[6s] opacity-100 translate-y-0'
-                : 'transition-all duration-[6s] opacity-0 translate-y-[200%]'
-            } fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center`}
-          >
-            <div className="relative -mt-5 md:-mt-20 w-11/12 md:w-1/2 lg:w-1/3 shadow rounded-sm bg-white border">
-              <div
-                className="absolute top-2 right-2 cursor-pointer"
+          <div className='fixed z-30 bg-black/60 inset-0 flex justify-center items-center p-4'>
+            <div className='relative w-full max-w-md bg-white rounded p-6 shadow-lg'>
+              <MdOutlineClose
+                className='absolute top-3 right-3 cursor-pointer'
+                size={25}
                 onClick={() => setIsNotes(false)}
-              >
-                <MdOutlineClose size={25} />
-              </div>
-              <div className=" flex justify-center">
-                <div className="px-3 py-8 w-full">
-                  <p className="text-center text-xl text-blue-500 font-semibold">
-                    Upload Notes
-                  </p>
-                  <form
-                    onSubmit={uploadNotes}
-                    className="py-10 flex flex-col gap-5"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm">Upload Notes</label>
-                      <input
-                        required
-                        type="file"
-                        accept="application/pdf,application/vnd.ms-excel"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setNote(e.target.files[0])}
-                      />
-                      <label className="text-sm">Remark</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="Enter Your Remark"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setRemark(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        type="submit"
-                        className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
+              />
+              <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
+                Upload Notes
+              </h2>
+              <form onSubmit={uploadNotes} className='space-y-4'>
+                <input
+                  required
+                  type='file'
+                  accept='.pdf'
+                  className='w-full p-2 bg-gray-100 border'
+                  onChange={(e) => setNote(e.target.files[0])}
+                />
+                <input
+                  required
+                  type='text'
+                  placeholder='Remark'
+                  className='w-full p-2 bg-gray-100 border'
+                  value={remark}
+                  onChange={(e) => setRemark(e.target.value)}
+                />
+                <input
+                  required
+                  type='number'
+                  placeholder='Order No'
+                  className='w-full p-2 bg-gray-100 border'
+                  value={inputOrderNo}
+                  onChange={(e) => setInputOrderNo(e.target.value)}
+                />
+                <button
+                  type='submit'
+                  className='w-full bg-blue-600 text-white py-2 rounded font-bold'
+                >
+                  Submit
+                </button>
+              </form>
             </div>
           </div>
         )}
-        {/* ---------- Upload Practices -------- */}
+
+        {/* ---------- Upload Practice Popup -------- */}
         {isPractice && (
-          <div
-            className={`${
-              isPractice
-                ? 'transition-all duration-[6s] opacity-100 translate-y-0'
-                : 'transition-all duration-[6s] opacity-0 translate-y-[200%]'
-            } fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center`}
-          >
-            <div className="relative -mt-5 md:-mt-20 w-11/12 md:w-1/2 lg:w-1/3 shadow rounded-sm bg-white border">
-              <div
-                className="absolute top-2 right-2 cursor-pointer"
+          <div className='fixed z-30 bg-black/60 inset-0 flex justify-center items-center p-4'>
+            <div className='relative w-full max-w-md bg-white rounded p-6 shadow-lg'>
+              <MdOutlineClose
+                className='absolute top-3 right-3 cursor-pointer'
+                size={25}
                 onClick={() => setIsPractice(false)}
-              >
-                <MdOutlineClose size={25} />
-              </div>
-              <div className=" flex justify-center">
-                <div className="px-3 py-8 w-full">
-                  <p className="text-center text-xl text-blue-500 font-semibold">
-                    Upload Practices
-                  </p>
-                  <form
-                    onSubmit={uploadPractice}
-                    className="py-10 flex flex-col gap-5"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm">Upload Practice</label>
-                      <input
-                        required
-                        type="file"
-                        accept="application/pdf,application/vnd.ms-excel"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setPractice(e.target.files[0])}
-                      />
-                      <label className="text-sm">Remark</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="Enter Your Remark"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setRemark(e.target.value)}
-                      />
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        type="submit"
-                        className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </form>
-                </div>
+              />
+              <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
+                Upload Practices
+              </h2>
+              <form onSubmit={uploadPractice} className='space-y-4'>
+                <input
+                  required
+                  type='file'
+                  accept='.pdf'
+                  className='w-full p-2 bg-gray-100 border'
+                  onChange={(e) => setPractice(e.target.files[0])}
+                />
+                <input
+                  required
+                  type='text'
+                  placeholder='Remark'
+                  className='w-full p-2 bg-gray-100 border'
+                  value={remark}
+                  onChange={(e) => setRemark(e.target.value)}
+                />
+                <input
+                  required
+                  type='number'
+                  placeholder='Order No'
+                  className='w-full p-2 bg-gray-100 border'
+                  value={inputOrderNo}
+                  onChange={(e) => setInputOrderNo(e.target.value)}
+                />
+                <button
+                  type='submit'
+                  className='w-full bg-blue-600 text-white py-2 rounded font-bold'
+                >
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ---------- Upload YT Video Popup -------- */}
+        {isVideo && (
+          <div className='fixed z-30 bg-black/60 inset-0 flex justify-center items-center p-4'>
+            <div className='relative w-full max-w-md bg-white rounded p-6 shadow-lg'>
+              <MdOutlineClose
+                className='absolute top-3 right-3 cursor-pointer'
+                size={25}
+                onClick={() => setIsVideo(false)}
+              />
+              <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
+                Upload YT Video
+              </h2>
+              <form onSubmit={uploadYoutubeVideo} className='space-y-4'>
+                <input
+                  required
+                  type='text'
+                  placeholder='Video Embed Link'
+                  className='w-full p-2 bg-gray-100 border'
+                  onChange={(e) => setYtLink(e.target.value)}
+                />
+                <input
+                  required
+                  type='number'
+                  placeholder='Order No'
+                  className='w-full p-2 bg-gray-100 border'
+                  value={inputOrderNo}
+                  onChange={(e) => setInputOrderNo(e.target.value)}
+                />
+                <button
+                  type='submit'
+                  className='w-full bg-blue-600 text-white py-2 rounded font-bold'
+                >
+                  Submit
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ------------ Delete Confirmation Modal ------------------ */}
+        {isDeleteModalOpen && (
+          <div className='fixed z-50 bg-black/60 inset-0 flex justify-center items-center p-4'>
+            <div className='bg-white w-full max-w-sm rounded-md p-6 flex flex-col items-center text-center'>
+              <MdWarningAmber size={50} className='text-red-500 mb-4' />
+              <h3 className='text-lg font-bold'>Delete Item?</h3>
+              <p className='text-gray-500 mt-2 text-sm'>
+                This will remove the content permanently. Continue?
+              </p>
+              <div className='flex gap-3 mt-6 w-full'>
+                <button
+                  className='flex-1 py-2 bg-gray-200 rounded'
+                  onClick={() => setIsDeleteModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className='flex-1 py-2 bg-red-600 text-white rounded font-bold'
+                  onClick={handleConfirmDelete}
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
         )}
-        {/* ---------- Upload YT Video -------- */}
-        {isVideo && (
-          <div
-            className={`${
-              isVideo
-                ? 'transition-all duration-[6s] opacity-100 translate-y-0'
-                : 'transition-all duration-[6s] opacity-0 translate-y-[200%]'
-            } fixed z-30 overflow-hidden bg-black/60 inset-0 h-screen flex justify-center items-center`}
-          >
-            <div className="relative -mt-5 md:-mt-20 w-11/12 md:w-1/2 lg:w-1/3 shadow rounded-sm bg-white border">
-              <div
-                className="absolute top-2 right-2 cursor-pointer"
-                onClick={() => setIsVideo(false)}
+
+        {/* (Keeping existing Question/Solution Edit Popups) */}
+        {isQuestionPopupOpen && (
+          <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
+            <form
+              onSubmit={editQuestion}
+              className='relative bg-white w-11/12 md:w-1/2 p-6 rounded'
+            >
+              <MdOutlineClose
+                onClick={() => setIsQuestionPopupOpen(false)}
+                className='absolute right-2 top-2 cursor-pointer'
+                size={25}
+              />
+              <label className='text-sm font-bold'>Edit Question Image</label>
+              <input
+                required
+                type='file'
+                accept='image/*'
+                onChange={onQusetionImageChange}
+                className='w-full border p-2 mt-2'
+              />
+              {prevQuestionImage && (
+                <img
+                  src={prevQuestionImage}
+                  className='h-32 object-contain mt-2 mx-auto'
+                />
+              )}
+              <button
+                type='submit'
+                className='w-full bg-blue-500 text-white mt-4 py-2 rounded'
               >
-                <MdOutlineClose size={25} />
-              </div>
-              <div className=" flex justify-center">
-                <div className="px-3 py-8 w-full">
-                  <p className="text-center text-xl text-blue-500 font-semibold">
-                    Upload Youtube Video
-                  </p>
-                  <form
-                    onSubmit={uploadYoutubeVideo}
-                    className="py-10 flex flex-col gap-5"
-                  >
-                    <div className="flex flex-col gap-1">
-                      <label className="text-sm">Youtube Video Link</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="Your Youtube Video Link"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setYtLink(e.target.value)}
-                      />
-                      {/* <label className="text-sm">Remark</label>
-                      <input
-                        required
-                        type="text"
-                        placeholder="Enter Your Remark"
-                        className="p-3 rounded-sm bg-gray-200 boredr-none focus:outline focus:outline-blue-300"
-                        onChange={(e) => setRemark(e.target.value)}
-                      /> */}
-                    </div>
-                    <div className="flex justify-center">
-                      <button
-                        type="submit"
-                        className="px-6 py-1.5 text-white bg-blue-500 roundedd-sm"
-                      >
-                        Submit
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
+                Update
+              </button>
+            </form>
+          </div>
+        )}
+
+        {isSolutionPopupOpen && (
+          <div className='fixed inset-0 bg-black/40 z-50 flex items-center justify-center'>
+            <form
+              onSubmit={editSolution}
+              className='relative bg-white w-11/12 md:w-1/2 p-6 rounded'
+            >
+              <MdOutlineClose
+                onClick={() => setIsSolutionPopupOpen(false)}
+                className='absolute right-2 top-2 cursor-pointer'
+                size={25}
+              />
+              <label className='text-sm font-bold'>Edit Solution Image</label>
+              <input
+                required
+                type='file'
+                accept='image/*'
+                onChange={onSolutionImageChange}
+                className='w-full border p-2 mt-2'
+              />
+              {prevSolutionImage && (
+                <img
+                  src={prevSolutionImage}
+                  className='h-32 object-contain mt-2 mx-auto'
+                />
+              )}
+              <button
+                type='submit'
+                className='w-full bg-blue-500 text-white mt-4 py-2 rounded'
+              >
+                Update
+              </button>
+            </form>
           </div>
         )}
       </div>
       {loading && <Loader />}
     </div>
-  );
-};
+  )
+}
 
-export default Contents;
+export default Contents
