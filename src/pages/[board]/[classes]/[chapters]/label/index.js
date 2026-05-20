@@ -189,40 +189,53 @@ const Label = () => {
         )}
 
         {labels.length > 0 && (
-          <div className='py-2 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 lg:gap-5'>
+          <div className='py-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
             {labels.map((label) => (
               <div
                 key={label.id}
-                className='bg-blue-50 px-3 py-5 rounded-md border border-blue-300'
+                className='bg-blue-50 p-4 sm:p-5 rounded-lg border border-blue-200 shadow-sm flex flex-col justify-between'
               >
-                <div className='flex justify-between items-center'>
-                  <div className='flex flex-col'>
-                    <h4 className='capitalize text-xl font-semibold'>
-                      {label.name}
-                    </h4>
-                  </div>
-                  <div className='flex space-x-2'>
+                {/* Header: Name and Action Icons */}
+                <div className='flex justify-between items-start mb-3'>
+                  <h4 className='capitalize text-lg font-bold text-gray-800 break-words line-clamp-2 pr-2'>
+                    {label.name}
+                  </h4>
+                  <div className='flex items-center gap-1 shrink-0'>
                     <button
-                      className='text-blue-500 hover:rounded-full hover:bg-gray-300 p-2'
+                      className='text-blue-600 hover:bg-blue-100 p-2 rounded-full transition-colors'
                       onClick={() => openEditLabelForm(label)}
+                      title="Edit"
                     >
-                      <FaRegEdit size={20} />
+                      <FaRegEdit size={18} />
                     </button>
                     <button
-                      className='text-red-500 hover:rounded-full hover:bg-gray-300 p-2'
+                      className='text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors'
                       onClick={() => openDeleteModal(label.id)}
+                      title="Delete"
                     >
-                      <BsTrash size={20} />
+                      <BsTrash size={18} />
                     </button>
                   </div>
                 </div>
-                <div className='my-2 border-b border-b-gray-600/50 opacity-30'></div>
-                <button
-                  className='mt-1 px-4 py-1.5 bg-blue-600 text-white rounded-sm transition-all duration-150 hover:bg-blue-400 hover:text-black'
-                  onClick={() => navigate(`${label.id}`)}
-                >
-                  Create Chapter Label
-                </button>
+
+                {/* Divider */}
+                <div className='mb-4 border-b border-blue-200/60'></div>
+
+                {/* Buttons Container: Mobile pe stacked, SM screens pe side-by-side */}
+                <div className='flex flex-col sm:flex-row gap-2 mt-auto'>
+                  <button
+                    className='flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded shadow-sm transition-all duration-200 hover:bg-blue-700 active:scale-95 text-center'
+                    onClick={() => navigate(`${label.id}`)}
+                  >
+                    Chapter Label
+                  </button>
+                  <button
+                    className='flex-1 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded shadow-sm transition-all duration-200 hover:bg-blue-600 active:scale-95 text-center'
+                    onClick={() => navigate(`${label.id}/${label.id}`)}
+                  >
+                    Upload Content
+                  </button>
+                </div>
               </div>
             ))}
           </div>

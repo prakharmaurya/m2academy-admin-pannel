@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getCookie } from './cookieConfig'
 
-// const baseUrl = 'http://192.168.1.38:5000'
+// const baseUrl = 'http://192.168.1.36:5000'
 const baseUrl = 'https://apiv2.m2academyedu.com'
 // const baseUrl = 'https://api.m2academy.in';
 // const cid = '2786caca-8a58-4ca9-87be-c55996c4bc11'; // inflection cid
