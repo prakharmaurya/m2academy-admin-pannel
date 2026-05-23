@@ -500,7 +500,7 @@ const Contents = () => {
                       Remark*
                     </label>
                     <input
-                      required
+
                       type='text'
                       placeholder='Topic name'
                       className='w-full p-2 bg-gray-100 rounded border'
@@ -553,7 +553,7 @@ const Contents = () => {
                   onChange={(e) => setNote(e.target.files[0])}
                 />
                 <input
-                  required
+
                   type='text'
                   placeholder='Remark'
                   className='w-full p-2 bg-gray-100 border'
@@ -600,7 +600,7 @@ const Contents = () => {
                   onChange={(e) => setPractice(e.target.files[0])}
                 />
                 <input
-                  required
+
                   type='text'
                   placeholder='Remark'
                   className='w-full p-2 bg-gray-100 border'
