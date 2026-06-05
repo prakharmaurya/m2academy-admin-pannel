@@ -17,6 +17,9 @@ import { MdOutlineClose, MdModeEdit, MdWarningAmber } from 'react-icons/md'
 import { BsTrash } from 'react-icons/bs'
 import Loader from '../../../../../../../components/ui/Loader'
 
+const MAX_FILE_SIZE_MB = 30
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024 // 30 MB in bytes
+
 const Contents = () => {
   const params = useParams()
 
@@ -35,21 +38,27 @@ const Contents = () => {
 
   // ----------- Form States -----------
   const [questionFile, setQuestionFile] = useState(null)
+  const [questionFileName, setQuestionFileName] = useState('') // New: for displaying file name
   const [answerFile, setAnswerFile] = useState(null)
+  const [answerFileName, setAnswerFileName] = useState('') // New: for displaying file name
   const [exYtVideoLink, setExYtVideoLink] = useState('')
-  const [inputOrderNo, setInputOrderNo] = useState('') // New State for Order No
+  const [inputOrderNo, setInputOrderNo] = useState('')
   const [remark, setRemark] = useState('')
   const [note, setNote] = useState(null)
+  const [noteFileName, setNoteFileName] = useState('') // New: for displaying file name
   const [practice, setPractice] = useState(null)
+  const [practiceFileName, setPracticeFileName] = useState('') // New: for displaying file name
   const [ytLink, setYtLink] = useState('')
 
   // ----------- Edit States -----------
   const [currentExId, setCurrentExId] = useState('')
   const [isQuestionPopupOpen, setIsQuestionPopupOpen] = useState(false)
   const [questionThumbnail, setQuestionThumbnail] = useState(null)
+  const [questionThumbnailName, setQuestionThumbnailName] = useState('') // New: for displaying file name
   const [prevQuestionImage, setPrevQuestionImage] = useState(null)
   const [isSolutionPopupOpen, setIsSolutionPopupOpen] = useState(false)
   const [solutionThumbnail, setSolutionThumbnail] = useState(null)
+  const [solutionThumbnailName, setSolutionThumbnailName] = useState('') // New: for displaying file name
   const [prevSolutionImage, setPrevSolutionImage] = useState(null)
   const [showYtUrlInput, setShowYtUrlInput] = useState(false)
   const [ytEditLink, setYtEditLink] = useState('')
@@ -91,8 +100,33 @@ const Contents = () => {
       setIsShowSnack(true)
     } catch (err) {
       console.log(err)
+      setSnackDetail({ type: 'error', msg: 'Failed to delete' })
+      setIsShowSnack(true)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Helper function for file size check and state update
+  const handleFileChange = (e, setFile, setFileName) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        setSnackDetail({
+          type: 'error',
+          msg: `File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`,
+        })
+        setIsShowSnack(true)
+        e.target.value = null // Clear the input
+        setFile(null)
+        setFileName('')
+      } else {
+        setFile(file)
+        setFileName(file.name)
+      }
+    } else {
+      setFile(null)
+      setFileName('')
     }
   }
 
@@ -103,7 +137,7 @@ const Contents = () => {
       const content = new FormData()
       content.append('categoryid', params.id * 1)
       content.append('remark', remark)
-      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('order_no', Number(inputOrderNo))
       content.append('questionfile', questionFile)
       if (answerFile) content.append('answerfile', answerFile)
       if (exYtVideoLink.length) content.append('videourl', exYtVideoLink)
@@ -112,6 +146,8 @@ const Contents = () => {
       fetchContents()
       setIsExercise(false)
       resetForm()
+      setSnackDetail({ type: 'success', msg: 'Exercise uploaded successfully' })
+      setIsShowSnack(true)
     } catch (err) {
       handleError(err)
     } finally {
@@ -127,12 +163,14 @@ const Contents = () => {
       content.append('tag', 'notes')
       content.append('categoryid', params.id * 1)
       content.append('remark', remark)
-      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('order_no', Number(inputOrderNo))
       content.append('file', note)
       await uploadContents(content)
       fetchContents()
       setIsNotes(false)
       resetForm()
+      setSnackDetail({ type: 'success', msg: 'Notes uploaded successfully' })
+      setIsShowSnack(true)
     } catch (err) {
       handleError(err)
     } finally {
@@ -148,12 +186,14 @@ const Contents = () => {
       content.append('tag', 'practice')
       content.append('categoryid', params.id * 1)
       content.append('remark', remark)
-      content.append('order_no', Number(inputOrderNo)) // Added Order No
+      content.append('order_no', Number(inputOrderNo))
       content.append('file', practice)
       await uploadContents(content)
       fetchContents()
       setIsPractice(false)
       resetForm()
+      setSnackDetail({ type: 'success', msg: 'Practice uploaded successfully' })
+      setIsShowSnack(true)
     } catch (err) {
       handleError(err)
     } finally {
@@ -168,12 +208,17 @@ const Contents = () => {
       const d = {
         category_id: params.id * 1,
         url: ytLink,
-        order_no: Number(inputOrderNo), // Added Order No
+        order_no: Number(inputOrderNo),
       }
       await uploadYtVideos(d)
       fetchContents()
       setIsVideo(false)
       resetForm()
+      setSnackDetail({
+        type: 'success',
+        msg: 'YouTube video uploaded successfully',
+      })
+      setIsShowSnack(true)
     } catch (err) {
       handleError(err)
     } finally {
@@ -185,10 +230,14 @@ const Contents = () => {
     setRemark('')
     setInputOrderNo('')
     setQuestionFile(null)
+    setQuestionFileName('')
     setAnswerFile(null)
+    setAnswerFileName('')
     setExYtVideoLink('')
     setNote(null)
+    setNoteFileName('')
     setPractice(null)
+    setPracticeFileName('')
     setYtLink('')
   }
 
@@ -196,19 +245,30 @@ const Contents = () => {
     if (err.response && err.response.data) {
       setSnackDetail({ type: 'error', msg: err.response.data.message })
       setIsShowSnack(true)
+    } else {
+      setSnackDetail({
+        type: 'error',
+        msg: 'An unexpected error occurred. Please try again.',
+      })
+      setIsShowSnack(true)
     }
   }
 
-  // (Keeping existing editQuestion, editSolution, editYtLink logic)
   const onQusetionImageChange = (e) => {
-    setQuestionThumbnail(e.target.files[0])
-    if (e.target.files[0])
+    handleFileChange(e, setQuestionThumbnail, setQuestionThumbnailName)
+    if (e.target.files[0] && e.target.files[0].size <= MAX_FILE_SIZE_BYTES) {
       setPrevQuestionImage(URL.createObjectURL(e.target.files[0]))
+    } else {
+      setPrevQuestionImage(null)
+    }
   }
   const onSolutionImageChange = (e) => {
-    setSolutionThumbnail(e.target.files[0])
-    if (e.target.files[0])
+    handleFileChange(e, setSolutionThumbnail, setSolutionThumbnailName)
+    if (e.target.files[0] && e.target.files[0].size <= MAX_FILE_SIZE_BYTES) {
       setPrevSolutionImage(URL.createObjectURL(e.target.files[0]))
+    } else {
+      setPrevSolutionImage(null)
+    }
   }
 
   const editQuestion = async (event) => {
@@ -227,6 +287,7 @@ const Contents = () => {
     } finally {
       setLoading(false)
       setPrevQuestionImage(null)
+      setQuestionThumbnailName('')
     }
   }
 
@@ -246,6 +307,7 @@ const Contents = () => {
     } finally {
       setLoading(false)
       setPrevSolutionImage(null)
+      setSolutionThumbnailName('')
     }
   }
 
@@ -281,7 +343,7 @@ const Contents = () => {
               className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
               onClick={() => setIsExercise(true)}
             >
-              Upload Excercise
+              Upload Exercise
             </button>
             <button
               className='px-4 py-1.5 bg-blue-600 text-white rounded-sm'
@@ -454,7 +516,10 @@ const Contents = () => {
               <MdOutlineClose
                 className='absolute top-3 right-3 cursor-pointer'
                 size={25}
-                onClick={() => setIsExercise(false)}
+                onClick={() => {
+                  setIsExercise(false)
+                  resetForm()
+                }}
               />
               <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
                 Upload Exercise
@@ -469,8 +534,15 @@ const Contents = () => {
                     type='file'
                     accept='image/*'
                     className='w-full p-2 bg-gray-100 rounded border'
-                    onChange={(e) => setQuestionFile(e.target.files[0])}
+                    onChange={(e) =>
+                      handleFileChange(e, setQuestionFile, setQuestionFileName)
+                    }
                   />
+                  {questionFileName && (
+                    <p className='text-sm text-gray-600 mt-1'>
+                      Selected: {questionFileName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className='text-xs font-bold block mb-1'>
@@ -480,8 +552,15 @@ const Contents = () => {
                     type='file'
                     accept='image/*'
                     className='w-full p-2 bg-gray-100 rounded border'
-                    onChange={(e) => setAnswerFile(e.target.files[0])}
+                    onChange={(e) =>
+                      handleFileChange(e, setAnswerFile, setAnswerFileName)
+                    }
                   />
+                  {answerFileName && (
+                    <p className='text-sm text-gray-600 mt-1'>
+                      Selected: {answerFileName}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className='text-xs font-bold block mb-1'>
@@ -491,6 +570,7 @@ const Contents = () => {
                     type='text'
                     placeholder='Embed link'
                     className='w-full p-2 bg-gray-100 rounded border'
+                    value={exYtVideoLink}
                     onChange={(e) => setExYtVideoLink(e.target.value)}
                   />
                 </div>
@@ -500,7 +580,7 @@ const Contents = () => {
                       Remark*
                     </label>
                     <input
-
+                      required
                       type='text'
                       placeholder='Topic name'
                       className='w-full p-2 bg-gray-100 rounded border'
@@ -539,35 +619,60 @@ const Contents = () => {
               <MdOutlineClose
                 className='absolute top-3 right-3 cursor-pointer'
                 size={25}
-                onClick={() => setIsNotes(false)}
+                onClick={() => {
+                  setIsNotes(false)
+                  resetForm()
+                }}
               />
               <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
                 Upload Notes
               </h2>
               <form onSubmit={uploadNotes} className='space-y-4'>
-                <input
-                  required
-                  type='file'
-                  accept='.pdf'
-                  className='w-full p-2 bg-gray-100 border'
-                  onChange={(e) => setNote(e.target.files[0])}
-                />
-                <input
-
-                  type='text'
-                  placeholder='Remark'
-                  className='w-full p-2 bg-gray-100 border'
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value)}
-                />
-                <input
-                  required
-                  type='number'
-                  placeholder='Order No'
-                  className='w-full p-2 bg-gray-100 border'
-                  value={inputOrderNo}
-                  onChange={(e) => setInputOrderNo(e.target.value)}
-                />
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Upload PDF*
+                  </label>
+                  <input
+                    required
+                    type='file'
+                    accept='.pdf'
+                    className='w-full p-2 bg-gray-100 border'
+                    onChange={(e) =>
+                      handleFileChange(e, setNote, setNoteFileName)
+                    }
+                  />
+                  {noteFileName && (
+                    <p className='text-sm text-gray-600 mt-1'>
+                      Selected: {noteFileName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Remark*
+                  </label>
+                  <input
+                    required
+                    type='text'
+                    placeholder='Remark'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={remark}
+                    onChange={(e) => setRemark(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Order No*
+                  </label>
+                  <input
+                    required
+                    type='number'
+                    placeholder='Order No'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={inputOrderNo}
+                    onChange={(e) => setInputOrderNo(e.target.value)}
+                  />
+                </div>
                 <button
                   type='submit'
                   className='w-full bg-blue-600 text-white py-2 rounded font-bold'
@@ -586,35 +691,60 @@ const Contents = () => {
               <MdOutlineClose
                 className='absolute top-3 right-3 cursor-pointer'
                 size={25}
-                onClick={() => setIsPractice(false)}
+                onClick={() => {
+                  setIsPractice(false)
+                  resetForm()
+                }}
               />
               <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
                 Upload Practices
               </h2>
               <form onSubmit={uploadPractice} className='space-y-4'>
-                <input
-                  required
-                  type='file'
-                  accept='.pdf'
-                  className='w-full p-2 bg-gray-100 border'
-                  onChange={(e) => setPractice(e.target.files[0])}
-                />
-                <input
-
-                  type='text'
-                  placeholder='Remark'
-                  className='w-full p-2 bg-gray-100 border'
-                  value={remark}
-                  onChange={(e) => setRemark(e.target.value)}
-                />
-                <input
-                  required
-                  type='number'
-                  placeholder='Order No'
-                  className='w-full p-2 bg-gray-100 border'
-                  value={inputOrderNo}
-                  onChange={(e) => setInputOrderNo(e.target.value)}
-                />
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Upload PDF*
+                  </label>
+                  <input
+                    required
+                    type='file'
+                    accept='.pdf'
+                    className='w-full p-2 bg-gray-100 border'
+                    onChange={(e) =>
+                      handleFileChange(e, setPractice, setPracticeFileName)
+                    }
+                  />
+                  {practiceFileName && (
+                    <p className='text-sm text-gray-600 mt-1'>
+                      Selected: {practiceFileName}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Remark*
+                  </label>
+                  <input
+                    required
+                    type='text'
+                    placeholder='Remark'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={remark}
+                    onChange={(e) => setRemark(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Order No*
+                  </label>
+                  <input
+                    required
+                    type='number'
+                    placeholder='Order No'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={inputOrderNo}
+                    onChange={(e) => setInputOrderNo(e.target.value)}
+                  />
+                </div>
                 <button
                   type='submit'
                   className='w-full bg-blue-600 text-white py-2 rounded font-bold'
@@ -633,27 +763,41 @@ const Contents = () => {
               <MdOutlineClose
                 className='absolute top-3 right-3 cursor-pointer'
                 size={25}
-                onClick={() => setIsVideo(false)}
+                onClick={() => {
+                  setIsVideo(false)
+                  resetForm()
+                }}
               />
               <h2 className='text-xl font-bold text-blue-600 text-center mb-6'>
                 Upload YT Video
               </h2>
               <form onSubmit={uploadYoutubeVideo} className='space-y-4'>
-                <input
-                  required
-                  type='text'
-                  placeholder='Video Embed Link'
-                  className='w-full p-2 bg-gray-100 border'
-                  onChange={(e) => setYtLink(e.target.value)}
-                />
-                <input
-                  required
-                  type='number'
-                  placeholder='Order No'
-                  className='w-full p-2 bg-gray-100 border'
-                  value={inputOrderNo}
-                  onChange={(e) => setInputOrderNo(e.target.value)}
-                />
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Video Embed Link*
+                  </label>
+                  <input
+                    required
+                    type='text'
+                    placeholder='Video Embed Link'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={ytLink}
+                    onChange={(e) => setYtLink(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className='text-xs font-bold block mb-1'>
+                    Order No*
+                  </label>
+                  <input
+                    required
+                    type='number'
+                    placeholder='Order No'
+                    className='w-full p-2 bg-gray-100 border'
+                    value={inputOrderNo}
+                    onChange={(e) => setInputOrderNo(e.target.value)}
+                  />
+                </div>
                 <button
                   type='submit'
                   className='w-full bg-blue-600 text-white py-2 rounded font-bold'
@@ -700,7 +844,11 @@ const Contents = () => {
               className='relative bg-white w-11/12 md:w-1/2 p-6 rounded'
             >
               <MdOutlineClose
-                onClick={() => setIsQuestionPopupOpen(false)}
+                onClick={() => {
+                  setIsQuestionPopupOpen(false)
+                  setPrevQuestionImage(null)
+                  setQuestionThumbnailName('')
+                }}
                 className='absolute right-2 top-2 cursor-pointer'
                 size={25}
               />
@@ -712,10 +860,16 @@ const Contents = () => {
                 onChange={onQusetionImageChange}
                 className='w-full border p-2 mt-2'
               />
+              {questionThumbnailName && (
+                <p className='text-sm text-gray-600 mt-1'>
+                  Selected: {questionThumbnailName}
+                </p>
+              )}
               {prevQuestionImage && (
                 <img
                   src={prevQuestionImage}
                   className='h-32 object-contain mt-2 mx-auto'
+                  alt='Preview'
                 />
               )}
               <button
@@ -735,7 +889,11 @@ const Contents = () => {
               className='relative bg-white w-11/12 md:w-1/2 p-6 rounded'
             >
               <MdOutlineClose
-                onClick={() => setIsSolutionPopupOpen(false)}
+                onClick={() => {
+                  setIsSolutionPopupOpen(false)
+                  setPrevSolutionImage(null)
+                  setSolutionThumbnailName('')
+                }}
                 className='absolute right-2 top-2 cursor-pointer'
                 size={25}
               />
@@ -747,10 +905,16 @@ const Contents = () => {
                 onChange={onSolutionImageChange}
                 className='w-full border p-2 mt-2'
               />
+              {solutionThumbnailName && (
+                <p className='text-sm text-gray-600 mt-1'>
+                  Selected: {solutionThumbnailName}
+                </p>
+              )}
               {prevSolutionImage && (
                 <img
                   src={prevSolutionImage}
                   className='h-32 object-contain mt-2 mx-auto'
+                  alt='Preview'
                 />
               )}
               <button
