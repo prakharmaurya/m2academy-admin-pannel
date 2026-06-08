@@ -17,8 +17,8 @@ import { MdOutlineClose, MdModeEdit, MdWarningAmber } from 'react-icons/md'
 import { BsTrash } from 'react-icons/bs'
 import Loader from '../../../../../../../components/ui/Loader'
 
-const MAX_FILE_SIZE_MB = 30
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024 // 30 MB in bytes
+const MAX_FILE_SIZE_MB = 100
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024 // 100 MB in bytes
 
 const Contents = () => {
   const params = useParams()
